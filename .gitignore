@@ -1,0 +1,28 @@
+# Environment files
+**/.env
+**/.env.*
+!**/.env.example
+
+# Secret and private-key files
+**/key.txt
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/credentials.json
+**/service-account*.json
+
+# Build output and dependencies
+**/node_modules/
+**/.next/
+**/target/
+**/coverage/
+**/*.tsbuildinfo
+
+# IDE and OS files
+**/.idea/
+**/.vscode/
+**/.DS_Store
+
+# Local backup of the former nested frontend repository
+/.frontend-git-backup/

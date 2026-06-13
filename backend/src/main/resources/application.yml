@@ -1,0 +1,32 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/timeplanner?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: validate    # Flyway quản lý schema, JPA chỉ validate
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: true           # Tắt khi lên production
+  flyway:
+    enabled: true
+
+logging:
+  level:
+    com.timeplanner: DEBUG
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    access-token-minutes: 30
+    refresh-token-days: 30
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:}
+    client-secret: ${GOOGLE_CLIENT_SECRET:}
+    redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:8080/api/v1/integrations/google/callback}
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
