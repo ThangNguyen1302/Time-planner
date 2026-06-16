@@ -41,6 +41,8 @@ public class AssistantActionExecutor {
             case "create_event" -> createEvent(userId, action);
             case "update_task" -> updateTask(userId, action);
             case "update_event" -> updateEvent(userId, action);
+            case "delete_task" -> deleteTask(userId, action);
+            case "delete_event" -> deleteEvent(userId, action);
             default -> throw new IllegalArgumentException("Unsupported assistant action: " + action.getType());
         };
     }
@@ -141,6 +143,30 @@ public class AssistantActionExecutor {
                 .type("update_event")
                 .data(new LinkedHashMap<>(data))
                 .result(eventResult(response))
+                .build();
+    }
+
+    private AssistantActionDto deleteTask(String userId, AssistantPlan.PlannedAction action) {
+        Map<String, Object> data = action.getData() == null ? Map.of() : action.getData();
+        Task task = resolveTask(userId, data);
+        Map<String, Object> result = Map.of("id", task.getId(), "title", task.getTitle());
+        taskService.deleteTask(userId, task.getId());
+        return AssistantActionDto.builder()
+                .type("delete_task")
+                .data(new LinkedHashMap<>(data))
+                .result(result)
+                .build();
+    }
+
+    private AssistantActionDto deleteEvent(String userId, AssistantPlan.PlannedAction action) {
+        Map<String, Object> data = action.getData() == null ? Map.of() : action.getData();
+        Event event = resolveEvent(userId, data);
+        Map<String, Object> result = Map.of("id", event.getId(), "title", event.getTitle());
+        eventService.deleteEvent(userId, event.getId());
+        return AssistantActionDto.builder()
+                .type("delete_event")
+                .data(new LinkedHashMap<>(data))
+                .result(result)
                 .build();
     }
 

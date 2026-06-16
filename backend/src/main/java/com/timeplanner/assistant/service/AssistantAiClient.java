@@ -186,7 +186,7 @@ public class AssistantAiClient {
                   "quickReplies": ["max 3 short replies"],
                   "actions": [
                     {
-                      "type": "create_task|create_event|update_task|update_event",
+                      "type": "create_task|create_event|update_task|update_event|delete_task|delete_event",
                       "data": {}
                     }
                   ]
@@ -215,6 +215,11 @@ public class AssistantAiClient {
                 - id: optional if known
                 - targetTitle: required when id is missing; title of the existing event to find
                 - title, description, startTime, endTime, color: optional fields to update
+
+                delete_task and delete_event data:
+                - id: optional if known
+                - targetTitle: required when id is missing; title of the existing item to delete
+                - only return a delete action when the user explicitly asks to delete or cancel that item
 
                 For update actions, never put the new title in targetTitle. Use targetTitle for the existing item and title for the new title.
 

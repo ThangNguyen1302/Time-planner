@@ -18,14 +18,22 @@ import java.util.regex.Pattern;
 public class AssistantRuleParser {
 
     private static final Pattern MINUTES_PATTERN = Pattern.compile("(\\d+)\\s*(phut|minute|minutes|min)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern TIME_PATTERN = Pattern.compile("(\\d{1,2})(?::(\\d{2}))?\\s*(h|gio|am|pm)?", Pattern.CASE_INSENSITIVE);
+    private static final Pattern TIME_PATTERN = Pattern.compile("(\\d{1,2})(?:(?::|h)(\\d{2}))?\\s*(h|gio|am|pm)?", Pattern.CASE_INSENSITIVE);
 
     public AssistantPlan parse(String message) {
         String normalized = normalize(message);
         boolean wantsTask = containsAny(normalized, "task", "viec", "todo", "cong viec");
         boolean wantsEvent = containsAny(normalized, "event", "su kien", "lich", "hop");
         boolean createIntent = containsAny(normalized, "tao", "them", "dat", "len");
-        boolean updateIntent = containsAny(normalized, "sua", "doi", "cap nhat", "chinh", "chuyen", "doi lich", "doi gio", "doi deadline", "doi han");
+        boolean updateIntent = containsAny(normalized, "sua", "doi", "cap nhat", "chinh", "chuyen", "danh dau", "doi lich", "doi gio", "doi deadline", "doi han");
+        boolean deleteIntent = containsAny(normalized, "xoa", "huy", "remove", "delete");
+
+        if (deleteIntent && (wantsTask || wantsEvent)) {
+            if (wantsEvent && !wantsTask) {
+                return parseEventDelete(message);
+            }
+            return parseTaskDelete(message);
+        }
 
         if (updateIntent && (wantsTask || wantsEvent)) {
             if (wantsEvent && !wantsTask) {
@@ -167,6 +175,40 @@ public class AssistantRuleParser {
                 .build();
     }
 
+    private AssistantPlan parseTaskDelete(String original) {
+        String targetTitle = cleanupDeleteTarget(original);
+        if (targetTitle.isBlank()) {
+            return AssistantPlan.ask("Bạn muốn xóa task nào?", "Xóa task Học backend");
+        }
+
+        return AssistantPlan.builder()
+                .message("Mình sẽ xóa task \"" + targetTitle + "\".")
+                .mood("serious")
+                .quickReplies(List.of("Xem tasks"))
+                .actions(List.of(AssistantPlan.PlannedAction.builder()
+                        .type("delete_task")
+                        .data(Map.of("targetTitle", targetTitle))
+                        .build()))
+                .build();
+    }
+
+    private AssistantPlan parseEventDelete(String original) {
+        String targetTitle = cleanupDeleteTarget(original);
+        if (targetTitle.isBlank()) {
+            return AssistantPlan.ask("Bạn muốn xóa event nào?", "Xóa lịch họp nhóm");
+        }
+
+        return AssistantPlan.builder()
+                .message("Mình sẽ xóa event \"" + targetTitle + "\".")
+                .mood("serious")
+                .quickReplies(List.of("Xem lịch"))
+                .actions(List.of(AssistantPlan.PlannedAction.builder()
+                        .type("delete_event")
+                        .data(Map.of("targetTitle", targetTitle))
+                        .build()))
+                .build();
+    }
+
     private int extractDuration(String normalized) {
         Matcher matcher = MINUTES_PATTERN.matcher(normalized);
         if (matcher.find()) return Integer.parseInt(matcher.group(1));
@@ -249,7 +291,7 @@ public class AssistantRuleParser {
 
     private String cleanupUpdateTarget(String original, List<String> prefixes) {
         String normalizedTitle = normalize(original);
-        normalizedTitle = normalizedTitle.replaceAll("^\\s*(sua|doi|cap nhat|chinh|chuyen)\\s+", "");
+        normalizedTitle = normalizedTitle.replaceAll("^\\s*(sua|doi|cap nhat|chinh|chuyen|danh dau)\\s+", "");
         normalizedTitle = normalizedTitle.replaceAll("^(deadline|han|thoi han)\\s+(cua\\s+)?(task|viec|todo)\\s+", "");
         normalizedTitle = normalizedTitle.replaceAll("^(gio|thoi gian)\\s+(cua\\s+)?(event|lich|su kien)\\s+", "");
         normalizedTitle = normalizedTitle.replaceAll("^(cua\\s+)?(task|viec|todo|event|lich|su kien)\\s+", "");
@@ -265,6 +307,14 @@ public class AssistantRuleParser {
         Matcher matcher = Pattern.compile("\\b(?:thanh|doi ten thanh)\\s+(.+)$").matcher(normalizedTitle);
         if (!matcher.find()) return "";
         return matcher.group(1).replaceAll("\\s+", " ").trim();
+    }
+
+    private String cleanupDeleteTarget(String original) {
+        return normalize(original)
+                .replaceAll("^\\s*(xoa|huy|remove|delete)\\s+", "")
+                .replaceAll("^(task|viec|cong viec|todo|event|lich|su kien)(?:\\s+|$)", "")
+                .replaceAll("\\s+", " ")
+                .trim();
     }
 
     private boolean isDurationUpdate(String normalized) {

@@ -73,11 +73,11 @@ export function ChatWidget({ avatar }: ChatWidgetProps) {
       if (assistantMessage) {
         setMessages((prev) => [...prev, assistantMessage])
         const actionTypes = assistantMessage.actions?.map((action) => action.type) ?? []
-        if (actionTypes.includes("create_task") || actionTypes.includes("update_task")) {
+        if (actionTypes.includes("create_task") || actionTypes.includes("update_task") || actionTypes.includes("delete_task")) {
           mutate("/api/v1/tasks")
           mutate((key) => typeof key === "string" && key.startsWith("/api/v1/time-blocks"))
         }
-        if (actionTypes.includes("create_event") || actionTypes.includes("update_event")) {
+        if (actionTypes.includes("create_event") || actionTypes.includes("update_event") || actionTypes.includes("delete_event")) {
           mutate("/api/v1/events")
           mutate((key) => typeof key === "string" && key.startsWith("/api/v1/time-blocks"))
         }

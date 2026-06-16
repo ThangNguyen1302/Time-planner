@@ -2,14 +2,12 @@
 
 import { useState, useRef, useEffect, useCallback } from "react"
 import { useSWRConfig } from "swr"
-import { MessageCircle, X, Send, Loader2, Bot, User, Sparkles, Volume2, VolumeX, Mic, MicOff, Maximize2, Minimize2 } from "lucide-react"
+import { MessageCircle, X, Send, Loader2, Bot, User, Sparkles, Maximize2, Minimize2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { Live2DAvatar, type Live2DExpression } from "@/components/live2d"
-import { useTTS } from "@/hooks/use-tts"
-import { useVoiceInput } from "@/hooks/use-voice-input"
 import { backendRequest } from "@/lib/client"
 import type { Message, Avatar } from "@/lib/types"
 
@@ -44,8 +42,6 @@ export function ChatWidgetLive2D({ avatar }: ChatWidgetProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [currentExpression, setCurrentExpression] = useState<Live2DExpression>("neutral")
-  const [ttsEnabled, setTtsEnabled] = useState(true)
-  const [voiceInputEnabled, setVoiceInputEnabled] = useState(false)
   const [live2dError, setLive2dError] = useState(false)
   const [triggerMotion, setTriggerMotion] = useState<string | null>(null)
   const [emotionIntensity, setEmotionIntensity] = useState(0.5)
@@ -60,58 +56,13 @@ export function ChatWidgetLive2D({ avatar }: ChatWidgetProps) {
     viewport.scrollTop = viewport.scrollHeight
   }, [])
   
-  // TTS hook
-  const { speak, stop: stopSpeaking, isSpeaking, isSupported: ttsSupported } = useTTS({
-    lang: "vi-VN",
-    rate: 1,
-    pitch: 1,
-  })
-
-  // Voice input hook
-  const { 
-    isListening, 
-    isSupported: voiceSupported,
-    transcript,
-    interimTranscript,
-    startListening,
-    stopListening,
-    resetTranscript,
-    error: voiceError,
-  } = useVoiceInput({ lang: "vi-VN" }, (text) => {
-    // When final transcript is received, add to input
-    setInput((prev) => prev + text + " ")
-  })
-
   // Auto scroll
   useEffect(() => {
     scrollToBottom()
   }, [messages, scrollToBottom])
 
-  // Handle voice input toggle
-  const toggleVoiceInput = useCallback(() => {
-    if (isListening) {
-      stopListening()
-      // Send message if we have transcript
-      if (input.trim()) {
-        sendMessage(input.trim())
-        setInput("")
-        resetTranscript()
-      }
-    } else {
-      setInput("")
-      resetTranscript()
-      startListening()
-    }
-    setVoiceInputEnabled(!isListening)
-  }, [isListening, input, stopListening, startListening, resetTranscript])
-
   const sendMessage = async (content: string) => {
     if (!content.trim() || isLoading) return
-
-    // Stop any ongoing speech
-    if (isSpeaking) {
-      stopSpeaking()
-    }
 
     const userMessage: Message = {
       id: crypto.randomUUID(),
@@ -165,11 +116,11 @@ export function ChatWidgetLive2D({ avatar }: ChatWidgetProps) {
         const actions = data.actions ?? []
         if (actions.length > 0) {
           const actionTypes = actions.map((a: { type: string }) => a.type)
-          if (actionTypes.includes("create_task") || actionTypes.includes("update_task")) {
+          if (actionTypes.includes("create_task") || actionTypes.includes("update_task") || actionTypes.includes("delete_task")) {
             mutate("/api/v1/tasks")
             mutate((key) => typeof key === "string" && key.startsWith("/api/v1/time-blocks"))
           }
-          if (actionTypes.includes("create_event") || actionTypes.includes("update_event")) {
+          if (actionTypes.includes("create_event") || actionTypes.includes("update_event") || actionTypes.includes("delete_event")) {
             mutate("/api/v1/events")
             mutate((key) => typeof key === "string" && key.startsWith("/api/v1/time-blocks"))
           }
@@ -178,7 +129,9 @@ export function ChatWidgetLive2D({ avatar }: ChatWidgetProps) {
             actionTypes.includes("create_task") ||
             actionTypes.includes("create_event") ||
             actionTypes.includes("update_task") ||
-            actionTypes.includes("update_event")
+            actionTypes.includes("update_event") ||
+            actionTypes.includes("delete_task") ||
+            actionTypes.includes("delete_event")
           ) {
             // Huohuo happy when successfully helping
             setTriggerMotion("Happy")
@@ -197,10 +150,6 @@ export function ChatWidgetLive2D({ avatar }: ChatWidgetProps) {
           setTriggerMotion("Tap")
         }
 
-        // Speak response if TTS enabled
-        if (ttsEnabled && ttsSupported && assistantMessage.content) {
-          await speak(assistantMessage.content)
-        }
       }
     } catch (error) {
       console.error("Chat error:", error)
@@ -281,26 +230,11 @@ export function ChatWidgetLive2D({ avatar }: ChatWidgetProps) {
               <div>
                 <p className="font-medium text-sm">{avatar?.name || "Trợ lý AI"}</p>
                 <p className="text-xs text-muted-foreground">
-                  {isLoading ? "Đang suy nghĩ..." : isSpeaking ? "Đang nói..." : "Sẵn sàng hỗ trợ"}
+                  {isLoading ? "Đang suy nghĩ..." : "Sẵn sàng hỗ trợ"}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-1">
-              {/* TTS Toggle */}
-              {ttsSupported && (
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={() => {
-                    if (isSpeaking) stopSpeaking()
-                    setTtsEnabled(!ttsEnabled)
-                  }}
-                  className="h-8 w-8"
-                  title={ttsEnabled ? "Tắt giọng nói" : "Bật giọng nói"}
-                >
-                  {ttsEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-                </Button>
-              )}
               {/* Expand Toggle */}
               <Button 
                 variant="ghost" 
@@ -331,7 +265,7 @@ export function ChatWidgetLive2D({ avatar }: ChatWidgetProps) {
                 width={360}
                 height={240}
                 expression={currentExpression}
-                isSpeaking={isSpeaking}
+                isSpeaking={false}
                 fitMode="cover"
                 // Shift model down a bit so the visible area focuses on head/upper body.
                 focusY={0.1}
@@ -364,7 +298,7 @@ export function ChatWidgetLive2D({ avatar }: ChatWidgetProps) {
                 <Sparkles className="w-12 h-12 mb-4 text-primary/30" />
                 <p className="text-sm font-medium">Xin chào! 👋</p>
                 <p className="text-xs mt-1 max-w-62.5">
-                  Tôi là trợ lý AI của bạn. Hãy nói chuyện với tôi bằng giọng nói hoặc tin nhắn!
+                  Tôi là trợ lý AI của bạn. Hãy nhắn tin để mình hỗ trợ quản lý lịch.
                 </p>
                 <div className="flex flex-wrap gap-2 mt-4 justify-center">
                   {["Lịch hôm nay?", "Tạo task mới", "Thống kê tuần"].map((suggestion) => (
@@ -447,56 +381,19 @@ export function ChatWidgetLive2D({ avatar }: ChatWidgetProps) {
             </ScrollArea>
           </div>
 
-          {/* Voice indicator */}
-          {isListening && (
-            <div className="px-4 py-2 bg-primary/10 border-t border-border">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                <span className="text-xs text-muted-foreground">
-                  {interimTranscript || "Đang nghe..."}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Voice error */}
-          {voiceError && (
-            <div className="px-4 py-2 bg-red-100 dark:bg-red-900/20 border-t border-red-200 dark:border-red-800">
-              <span className="text-xs text-red-600 dark:text-red-400">{voiceError}</span>
-            </div>
-          )}
-
           {/* Input */}
           <div className="p-4 border-t border-border">
             <form
               onSubmit={(e) => {
                 e.preventDefault()
-                if (isListening) {
-                  stopListening()
-                }
                 sendMessage(input)
               }}
               className="flex gap-2"
             >
-              {/* Voice input button */}
-              {voiceSupported && (
-                <Button
-                  type="button"
-                  variant={isListening ? "destructive" : "outline"}
-                  size="icon"
-                  onClick={toggleVoiceInput}
-                  disabled={isLoading}
-                  className="shrink-0"
-                  title={isListening ? "Dừng nghe" : "Nói"}
-                >
-                  {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                </Button>
-              )}
-              
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder={isListening ? "Đang nghe..." : "Nhập tin nhắn..."}
+                placeholder="Nhập tin nhắn..."
                 className="flex-1"
                 disabled={isLoading}
               />

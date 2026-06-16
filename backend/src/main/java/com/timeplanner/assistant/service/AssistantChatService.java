@@ -135,6 +135,12 @@ public class AssistantChatService {
             if ("update_event".equals(action.getType())) {
                 return "Đã cập nhật event" + (titleForMessage == null ? "." : " \"" + titleForMessage + "\".");
             }
+            if ("delete_task".equals(action.getType())) {
+                return "Đã xóa task" + (titleForMessage == null ? "." : " \"" + titleForMessage + "\".");
+            }
+            if ("delete_event".equals(action.getType())) {
+                return "Đã xóa event" + (titleForMessage == null ? "." : " \"" + titleForMessage + "\".");
+            }
             Object title = action.getData() == null ? null : action.getData().get("title");
             if ("create_task".equals(action.getType())) {
                 return "Đã tạo task" + (title == null ? "." : " \"" + title + "\".");
