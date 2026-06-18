@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, CheckCircle2, Clock, ListTodo, Plus, Sparkles, Target } from "lucide-react"
+import { Calendar, CheckCircle2, Clock, ListTodo, Plus, Target } from "lucide-react"
 import Link from "next/link"
 import type { Task, Event, TimeBlock } from "@/lib/types"
 import { format, isToday, isTomorrow, differenceInDays } from "date-fns"
@@ -125,10 +125,10 @@ export function DashboardOverview({ tasks, events, timeBlocks }: DashboardOvervi
               <div className="text-center py-8">
                 <Calendar className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
                 <p className="text-sm text-muted-foreground mb-4">Chưa có lịch hôm nay</p>
-                <Link href="/dashboard/calendar?autoplan=true">
+                <Link href="/dashboard/calendar">
                   <Button size="sm" className="gap-2">
-                    <Sparkles className="h-4 w-4" />
-                    Auto Plan
+                    <Calendar className="h-4 w-4" />
+                    Mo lich
                   </Button>
                 </Link>
               </div>
@@ -213,12 +213,6 @@ export function DashboardOverview({ tasks, events, timeBlocks }: DashboardOvervi
               <Button variant="outline" className="gap-2 bg-transparent">
                 <Plus className="h-4 w-4" />
                 Tạo Event
-              </Button>
-            </Link>
-            <Link href="/dashboard/calendar?autoplan=true">
-              <Button className="gap-2">
-                <Sparkles className="h-4 w-4" />
-                Auto Plan tuần này
               </Button>
             </Link>
           </div>

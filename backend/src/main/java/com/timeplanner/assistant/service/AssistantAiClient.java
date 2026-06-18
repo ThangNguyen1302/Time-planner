@@ -50,17 +50,17 @@ public class AssistantAiClient {
 
     public AssistantPlan plan(String message, List<String> history) {
         if (!hasConfiguredProvider()) {
-            return ruleParser.parse(message);
+            return ruleParser.parse(message, history);
         }
 
         try {
             AssistantPlan plan = callModel(message, history);
             if (plan == null || plan.getMessage() == null || plan.getMessage().isBlank()) {
-                return ruleParser.parse(message);
+                return ruleParser.parse(message, history);
             }
             return plan;
         } catch (Exception ignored) {
-            return ruleParser.parse(message);
+            return ruleParser.parse(message, history);
         }
     }
 

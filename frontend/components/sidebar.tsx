@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Calendar, CheckSquare, Clock, Home, ListTodo, Settings, Sparkles, Bot } from "lucide-react"
+import { Calendar, CheckSquare, Clock, Home, ListTodo, Settings, Bot } from "lucide-react"
 
 type DashboardUser = {
   email?: string | null
@@ -56,16 +56,6 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
           )
         })}
       </nav>
-
-      <div className="p-4 border-t border-sidebar-border">
-        <Link
-          href="/dashboard/calendar?autoplan=true"
-          className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg bg-sidebar-primary text-sidebar-primary-foreground font-medium text-sm hover:opacity-90 transition-opacity"
-        >
-          <Sparkles className="w-4 h-4" />
-          Auto Plan
-        </Link>
-      </div>
     </aside>
   )
 }

@@ -73,8 +73,8 @@ export default function HomePage() {
           />
           <FeatureCard
             icon={<Sparkles className="w-6 h-6" />}
-            title="Auto Plan"
-            description="Một nút bấm, app tự xếp lịch cho tất cả task và event vào slot trống phù hợp."
+            title="Google Calendar"
+            description="Ket noi Google Calendar de xem va dong bo su kien vao lich TimePlanner."
           />
           <FeatureCard
             icon={<Clock className="w-6 h-6" />}

@@ -4,7 +4,7 @@ import type React from "react"
 import { useMemo } from "react"
 import { useState } from "react"
 import useSWR from "swr"
-import { AlertCircle, CalendarDays, Check, Clock, Edit2, Loader2, Plus, Save } from "lucide-react"
+import { AlertCircle, CalendarDays, Check, ChevronLeft, ChevronRight, Clock, Edit2, Loader2, Plus, Save } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { backendRequest } from "@/lib/client"
+import { backendRequest, unwrapData } from "@/lib/client"
 import { extractItems, fromDateInputValue, toDateInputValue } from "@/lib/api-response"
 import type { Event, Task, TimeBlock } from "@/lib/types"
 
@@ -40,10 +40,23 @@ type CalendarItem = {
   sourceId?: string
 }
 
-function getWeekRange() {
-  const now = new Date()
-  const start = new Date(now)
-  start.setDate(now.getDate() - now.getDay())
+type GoogleStatus = {
+  connected: boolean
+}
+
+type GoogleCalendarEvent = {
+  id: string
+  summary?: string
+  description?: string
+  startTime?: string
+  endTime?: string
+  allDay?: boolean
+  calendarId?: string
+}
+
+function getWeekRange(anchorDate: Date) {
+  const start = new Date(anchorDate)
+  start.setDate(anchorDate.getDate() - anchorDate.getDay())
   start.setHours(0, 0, 0, 0)
 
   const end = new Date(start)
@@ -152,22 +165,55 @@ function mapTasks(tasks: Task[], existingSourceIds: Set<string>, from: Date, to:
     .filter(Boolean) as CalendarItem[]
 }
 
+function mapGoogleEvents(events: GoogleCalendarEvent[], from: Date, to: Date) {
+  return events
+    .map((event) => {
+      const start = new Date(event.startTime || "")
+      const end = new Date(event.endTime || event.startTime || "")
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || !isInWeek(start, from, to)) return null
+
+      return {
+        id: `google-${event.calendarId || "calendar"}-${event.id}`,
+        title: event.summary || "Google Calendar event",
+        start,
+        end,
+        type: "event" as const,
+        color: "#16a34a",
+      }
+    })
+    .filter(Boolean) as CalendarItem[]
+}
+
 export default function CalendarPage() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false)
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false)
-  const range = useMemo(() => getWeekRange(), [])
+  const [visibleWeek, setVisibleWeek] = useState(() => new Date())
+  const range = useMemo(() => getWeekRange(visibleWeek), [visibleWeek])
   const timeBlocks = useSWR(
     `/api/v1/time-blocks?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`,
     fetcher,
   )
   const tasks = useSWR("/api/v1/tasks", fetcher)
   const events = useSWR("/api/v1/events", fetcher)
+  const googleStatus = useSWR("/api/v1/integrations/google/status", fetcher)
+  const googleConnected = googleStatus.data
+    ? unwrapData(googleStatus.data as GoogleStatus | { data: GoogleStatus }).connected
+    : false
+  const googleEvents = useSWR(
+    googleConnected
+      ? `/api/v1/integrations/google/events?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(
+          range.to,
+        )}&timezone=Asia/Ho_Chi_Minh`
+      : null,
+    fetcher,
+  )
 
   const blocks = extractItems<TimeBlock>(timeBlocks.data as never)
   const taskItems = extractItems<Task>(tasks.data as never)
   const eventItems = extractItems<Event>(events.data as never)
+  const googleEventItems = extractItems<GoogleCalendarEvent>(googleEvents.data as never)
   const selectedTask = taskItems.find((task) => task.id === selectedTaskId)
   const selectedEvent = eventItems.find((event) => event.id === selectedEventId)
   const existingSourceIds = new Set(blocks.map((block) => block.source_id).filter((id): id is string => Boolean(id)))
@@ -175,17 +221,27 @@ export default function CalendarPage() {
     ...mapTimeBlocks(blocks),
     ...mapTasks(taskItems, existingSourceIds, range.start, range.end),
     ...mapEvents(eventItems, existingSourceIds, range.start, range.end),
+    ...mapGoogleEvents(googleEventItems, range.start, range.end),
   ].filter((item) => item.type !== "task" || !taskItems.find((task) => task.id === item.sourceId && task.status === "completed"))
   const unscheduledTasks = taskItems.filter(
     (task) => task.status !== "completed" && !task.deadline && !existingSourceIds.has(task.id),
   )
-  const isLoading = timeBlocks.isLoading || tasks.isLoading || events.isLoading
-  const errors = [timeBlocks.error, tasks.error, events.error].filter(Boolean) as Error[]
+  const isLoading = timeBlocks.isLoading || tasks.isLoading || events.isLoading || googleEvents.isLoading
+  const errors = [timeBlocks.error, tasks.error, events.error, googleStatus.error, googleEvents.error].filter(Boolean) as Error[]
 
   const refreshCalendar = () => {
     tasks.mutate()
     events.mutate()
     timeBlocks.mutate()
+    googleEvents.mutate()
+  }
+
+  const moveWeek = (offset: number) => {
+    setVisibleWeek((current) => {
+      const next = new Date(current)
+      next.setDate(current.getDate() + offset * 7)
+      return next
+    })
   }
 
   const createTask = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -280,6 +336,15 @@ export default function CalendarPage() {
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+          <Button type="button" size="icon" variant="outline" onClick={() => moveWeek(-1)} aria-label="Tuan truoc" title="Tuan truoc">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button type="button" size="sm" variant="outline" onClick={() => setVisibleWeek(new Date())}>
+            Hom nay
+          </Button>
+          <Button type="button" size="icon" variant="outline" onClick={() => moveWeek(1)} aria-label="Tuan sau" title="Tuan sau">
+            <ChevronRight className="h-4 w-4" />
+          </Button>
           <Button type="button" size="sm" onClick={() => setIsTaskDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Task

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -16,7 +17,7 @@ class AssistantRuleParserTest {
     @Test
     void supportsTaskCreateUpdateAndDelete() {
         assertAction("Tạo task học backend deadline mai 17h", "create_task");
-        assertAction("Sửa task học backend thành học Spring", "update_task");
+        assertAction("Sua task hoc backend thanh hoc Spring", "update_task");
         assertAction("Xóa task học backend", "delete_task");
     }
 
@@ -41,7 +42,7 @@ class AssistantRuleParserTest {
 
     @Test
     void extractsTaskUpdateDetails() {
-        AssistantPlan renamePlan = parser.parse("Sửa task học backend thành học Spring");
+        AssistantPlan renamePlan = parser.parse("Sua task hoc backend thanh hoc Spring");
         assertThat(singleAction(renamePlan, "update_task").getData())
                 .containsEntry("targetTitle", "hoc backend")
                 .containsEntry("title", "hoc spring");
@@ -50,6 +51,18 @@ class AssistantRuleParserTest {
         assertThat(singleAction(completionPlan, "update_task").getData())
                 .containsEntry("targetTitle", "nop bao cao")
                 .containsEntry("status", "completed");
+
+        AssistantPlan deadlinePlan = parser.parse("Chinh deadline task 1 thanh 9h ngay mai");
+        assertThat(singleAction(deadlinePlan, "update_task").getData())
+                .containsEntry("targetTitle", "1")
+                .containsEntry("deadline", LocalDateTime.of(LocalDate.now().plusDays(1), LocalTime.of(9, 0)).toString())
+                .doesNotContainKey("title");
+
+        AssistantPlan renameDateLikeTitlePlan = parser.parse("Chinh ten task 9h ngay mai thanh test");
+        assertThat(singleAction(renameDateLikeTitlePlan, "update_task").getData())
+                .containsEntry("targetTitle", "9h ngay mai")
+                .containsEntry("title", "test")
+                .doesNotContainKey("deadline");
     }
 
     @Test
@@ -81,6 +94,42 @@ class AssistantRuleParserTest {
                 .containsEntry("targetTitle", "weekly report");
         assertThat(singleAction(parser.parse("Remove event team meeting"), "delete_event").getData())
                 .containsEntry("targetTitle", "team meeting");
+    }
+
+    @Test
+    void usesHistoryWhenUserAnswersMissingTaskTitle() {
+        AssistantPlan plan = parser.parse("Học backend", List.of(
+                "user: Tạo task",
+                "assistant: Task này tên là gì?"
+        ));
+
+        assertThat(singleAction(plan, "create_task").getData())
+                .containsEntry("title", "hoc backend");
+    }
+
+    @Test
+    void usesHistoryWhenUserAnswersMissingEventTime() {
+        AssistantPlan plan = parser.parse("Mai 9h", List.of(
+                "user: Tạo event họp khách hàng",
+                "assistant: Event \"hop khach hang\" bắt đầu lúc nào?"
+        ));
+
+        assertThat(singleAction(plan, "create_event").getData())
+                .containsEntry("title", "hop khach hang")
+                .containsEntry("startTime", LocalDateTime.of(LocalDate.now().plusDays(1), LocalTime.of(9, 0)).toString())
+                .containsEntry("endTime", LocalDateTime.of(LocalDate.now().plusDays(1), LocalTime.of(10, 0)).toString());
+    }
+
+    @Test
+    void usesHistoryWhenUserAnswersMissingUpdateFields() {
+        AssistantPlan plan = parser.parse("Đổi deadline sang mai 17h", List.of(
+                "user: Sửa task nộp báo cáo",
+                "assistant: Bạn muốn đổi thông tin nào của task \"nop bao cao\"?"
+        ));
+
+        assertThat(singleAction(plan, "update_task").getData())
+                .containsEntry("targetTitle", "nop bao cao")
+                .containsEntry("deadline", LocalDateTime.of(LocalDate.now().plusDays(1), LocalTime.of(17, 0)).toString());
     }
 
     private void assertAction(String message, String expectedType) {
