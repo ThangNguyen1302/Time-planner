@@ -127,34 +127,34 @@ export default function TasksPage() {
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Tasks</CardTitle>
-          <CardDescription>Create tasks, edit details, and assign them to your calendar.</CardDescription>
+          <CardTitle>Công việc</CardTitle>
+          <CardDescription>Tạo công việc, chỉnh sửa chi tiết và thêm vào lịch của bạn.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleCreate} className="grid gap-3 lg:grid-cols-[1fr_1fr_120px_180px_100px_auto]">
+          <form onSubmit={handleCreate} className="grid gap-3 lg:grid-cols-[1fr_1.5fr_140px_180px_120px_auto]">
             <div className="grid gap-1">
-              <Label htmlFor="title">Title</Label>
+              <Label htmlFor="title">Tiêu đề</Label>
               <Input id="title" name="title" required />
             </div>
             <div className="grid gap-1">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Mô tả</Label>
               <Input id="description" name="description" />
             </div>
             <div className="grid gap-1">
-              <Label htmlFor="duration">Minutes</Label>
+              <Label htmlFor="duration">Thời lượng (phút)</Label>
               <Input id="duration" name="duration" type="number" min={1} defaultValue={30} />
             </div>
             <div className="grid gap-1">
-              <Label htmlFor="deadline">Deadline</Label>
+              <Label htmlFor="deadline">Hạn chót</Label>
               <Input id="deadline" name="deadline" type="datetime-local" />
             </div>
             <div className="grid gap-1">
-              <Label htmlFor="priority">Priority</Label>
+              <Label htmlFor="priority">Mức độ ưu tiên</Label>
               <Input id="priority" name="priority" type="number" min={1} max={5} defaultValue={2} />
             </div>
             <Button type="submit" className="self-end">
               <Plus className="mr-2 h-4 w-4" />
-              Add
+              Thêm
             </Button>
           </form>
         </CardContent>
@@ -162,18 +162,18 @@ export default function TasksPage() {
 
       <Card>
         <CardContent className="pt-6">
-          <div className="mb-4 grid gap-3 lg:grid-cols-[1fr_170px_140px_120px]">
+          <div className="mb-4 grid gap-3 lg:grid-cols-[1fr_180px_180px_140px]">
             <div className="grid gap-1">
-              <Label htmlFor="task-search">Search</Label>
+              <Label htmlFor="task-search">Tìm kiếm</Label>
               <Input
                 id="task-search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Title or description"
+                placeholder="Tiêu đề hoặc mô tả"
               />
             </div>
             <div className="grid gap-1">
-              <Label>Status</Label>
+              <Label>Trạng thái</Label>
               <Select
                 value={statusFilter}
                 onValueChange={(value) => {
@@ -185,7 +185,7 @@ export default function TasksPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="all">Tất cả trạng thái</SelectItem>
                   {taskStatuses.map((status) => (
                     <SelectItem key={status} value={status}>
                       {status}
@@ -195,13 +195,13 @@ export default function TasksPage() {
               </Select>
             </div>
             <div className="grid gap-1">
-              <Label>Priority</Label>
+              <Label>Mức ưu tiên</Label>
               <Select value={priorityFilter} onValueChange={setPriorityFilter}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All priorities</SelectItem>
+                  <SelectItem value="all">Tất cả mức ưu tiên</SelectItem>
                   {[1, 2, 3, 4, 5].map((priority) => (
                     <SelectItem key={priority} value={String(priority)}>
                       P{priority}
@@ -211,7 +211,7 @@ export default function TasksPage() {
               </Select>
             </div>
             <div className="grid gap-1">
-              <Label>Page size</Label>
+              <Label>Số lượng/trang</Label>
               <Select
                 value={String(pageSize)}
                 onValueChange={(value) => {
@@ -235,7 +235,7 @@ export default function TasksPage() {
 
           {isLoading && <Loader2 className="h-5 w-5 animate-spin" />}
           {error && <p className="text-sm text-destructive">{error.message}</p>}
-          {!isLoading && !filteredTasks.length && <p className="text-sm text-muted-foreground">No tasks found.</p>}
+          {!isLoading && !filteredTasks.length && <p className="text-sm text-muted-foreground">Không tìm thấy công việc nào.</p>}
           <div className="space-y-3">
             {filteredTasks.map((task) => {
               const isEditing = editingId === task.id
@@ -246,11 +246,11 @@ export default function TasksPage() {
                   {isEditing ? (
                     <form onSubmit={(event) => handleUpdate(event, task.id)} className="grid gap-3 lg:grid-cols-6">
                       <div className="grid gap-1 lg:col-span-2">
-                        <Label htmlFor={`task-title-${task.id}`}>Title</Label>
+                        <Label htmlFor={`task-title-${task.id}`}>Tiêu đề</Label>
                         <Input id={`task-title-${task.id}`} name="title" defaultValue={task.title} required />
                       </div>
                       <div className="grid gap-1 lg:col-span-4">
-                        <Label htmlFor={`task-description-${task.id}`}>Description</Label>
+                        <Label htmlFor={`task-description-${task.id}`}>Mô tả</Label>
                         <Textarea
                           id={`task-description-${task.id}`}
                           name="description"
@@ -259,7 +259,7 @@ export default function TasksPage() {
                         />
                       </div>
                       <div className="grid gap-1">
-                        <Label htmlFor={`task-duration-${task.id}`}>Minutes</Label>
+                        <Label htmlFor={`task-duration-${task.id}`}>Phút</Label>
                         <Input
                           id={`task-duration-${task.id}`}
                           name="duration"
@@ -269,7 +269,7 @@ export default function TasksPage() {
                         />
                       </div>
                       <div className="grid gap-1 lg:col-span-2">
-                        <Label htmlFor={`task-deadline-${task.id}`}>Deadline</Label>
+                        <Label htmlFor={`task-deadline-${task.id}`}>Hạn chót</Label>
                         <Input
                           id={`task-deadline-${task.id}`}
                           name="deadline"
@@ -278,7 +278,7 @@ export default function TasksPage() {
                         />
                       </div>
                       <div className="grid gap-1">
-                        <Label htmlFor={`task-priority-${task.id}`}>Priority</Label>
+                        <Label htmlFor={`task-priority-${task.id}`}>Ưu tiên</Label>
                         <Input
                           id={`task-priority-${task.id}`}
                           name="priority"
@@ -289,7 +289,7 @@ export default function TasksPage() {
                         />
                       </div>
                       <div className="grid gap-1">
-                        <Label htmlFor={`task-status-${task.id}`}>Status</Label>
+                        <Label htmlFor={`task-status-${task.id}`}>Trạng thái</Label>
                         <select
                           id={`task-status-${task.id}`}
                           name="status"
@@ -306,11 +306,11 @@ export default function TasksPage() {
                       <div className="flex items-end gap-2">
                         <Button type="submit" size="sm">
                           <Save className="mr-2 h-4 w-4" />
-                          Save
+                          Lưu
                         </Button>
                         <Button type="button" variant="outline" size="sm" onClick={() => setEditingId(null)}>
                           <X className="mr-2 h-4 w-4" />
-                          Cancel
+                          Hủy
                         </Button>
                       </div>
                     </form>
@@ -319,16 +319,16 @@ export default function TasksPage() {
                       <div className="min-w-0 flex-1">
                         <p className="font-medium">{task.title}</p>
                         <p className="text-sm text-muted-foreground">
-                          {task.status} - {task.duration} min - priority {task.priority}
+                          {task.status} - {task.duration} phút - ưu tiên {task.priority}
                         </p>
                         {task.description && <p className="mt-1 text-sm text-muted-foreground">{task.description}</p>}
                       </div>
                       <Button variant="outline" size="sm" onClick={() => updateStatus(task.id, "completed")}>
-                        Complete
+                        Hoàn thành
                       </Button>
                       <Button variant="outline" size="sm" onClick={() => setSchedulingId(isScheduling ? null : task.id)}>
                         <CalendarPlus className="mr-2 h-4 w-4" />
-                        Schedule
+                        Xếp lịch
                       </Button>
                       <Button variant="ghost" size="icon" onClick={() => setEditingId(task.id)}>
                         <Edit2 className="h-4 w-4" />
@@ -345,16 +345,16 @@ export default function TasksPage() {
                       className="grid gap-3 border-t pt-3 md:grid-cols-[1fr_1fr_auto]"
                     >
                       <div className="grid gap-1">
-                        <Label htmlFor={`schedule-start-${task.id}`}>Start</Label>
+                        <Label htmlFor={`schedule-start-${task.id}`}>Bắt đầu</Label>
                         <Input id={`schedule-start-${task.id}`} name="startTime" type="datetime-local" required />
                       </div>
                       <div className="grid gap-1">
-                        <Label htmlFor={`schedule-end-${task.id}`}>End</Label>
+                        <Label htmlFor={`schedule-end-${task.id}`}>Kết thúc</Label>
                         <Input id={`schedule-end-${task.id}`} name="endTime" type="datetime-local" />
                       </div>
                       <Button type="submit" className="self-end">
                         <CalendarPlus className="mr-2 h-4 w-4" />
-                        Assign
+                        Giao việc
                       </Button>
                     </form>
                   )}
@@ -364,12 +364,12 @@ export default function TasksPage() {
           </div>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
             <span>
-              Page {page + 1} / {totalPages}
-              {typeof meta.totalElements === "number" ? ` - ${meta.totalElements} tasks` : ""}
+              Trang {page + 1} / {totalPages}
+              {typeof meta.totalElements === "number" ? ` - ${meta.totalElements} công việc` : ""}
             </span>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" disabled={page <= 0} onClick={() => setPage((value) => Math.max(0, value - 1))}>
-                Previous
+                Trước
               </Button>
               <Button
                 variant="outline"
@@ -377,7 +377,7 @@ export default function TasksPage() {
                 disabled={page + 1 >= totalPages}
                 onClick={() => setPage((value) => value + 1)}
               >
-                Next
+                Sau
               </Button>
             </div>
           </div>

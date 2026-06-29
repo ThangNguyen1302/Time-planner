@@ -128,7 +128,7 @@ export function DashboardOverview({ tasks, events, timeBlocks }: DashboardOvervi
                 <Link href="/dashboard/calendar">
                   <Button size="sm" className="gap-2">
                     <Calendar className="h-4 w-4" />
-                    Mo lich
+                    Mở lịch
                   </Button>
                 </Link>
               </div>

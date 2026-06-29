@@ -74,7 +74,7 @@ export default function HomePage() {
           <FeatureCard
             icon={<Sparkles className="w-6 h-6" />}
             title="Google Calendar"
-            description="Ket noi Google Calendar de xem va dong bo su kien vao lich TimePlanner."
+            description="Kết nối Google Calendar để xem và đồng bộ sự kiện vào lịch TimePlanner."
           />
           <FeatureCard
             icon={<Clock className="w-6 h-6" />}

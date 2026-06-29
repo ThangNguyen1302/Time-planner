@@ -329,20 +329,20 @@ export default function CalendarPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-normal">Lich tuan</h1>
+          <h1 className="text-2xl font-semibold tracking-normal">Lịch tuần</h1>
           <p className="text-sm text-muted-foreground">
             {range.days[0].toLocaleDateString("vi-VN")} - {range.days[6].toLocaleDateString("vi-VN")}
           </p>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-          <Button type="button" size="icon" variant="outline" onClick={() => moveWeek(-1)} aria-label="Tuan truoc" title="Tuan truoc">
+          <Button type="button" size="icon" variant="outline" onClick={() => moveWeek(-1)} aria-label="Tuần trước" title="Tuần trước">
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <Button type="button" size="sm" variant="outline" onClick={() => setVisibleWeek(new Date())}>
-            Hom nay
+            Hôm nay
           </Button>
-          <Button type="button" size="icon" variant="outline" onClick={() => moveWeek(1)} aria-label="Tuan sau" title="Tuan sau">
+          <Button type="button" size="icon" variant="outline" onClick={() => moveWeek(1)} aria-label="Tuần sau" title="Tuần sau">
             <ChevronRight className="h-4 w-4" />
           </Button>
           <Button type="button" size="sm" onClick={() => setIsTaskDialogOpen(true)}>
@@ -367,7 +367,7 @@ export default function CalendarPage() {
         <CardHeader className="border-b py-4">
           <CardTitle className="flex items-center gap-2 text-base">
             <CalendarDays className="h-4 w-4" />
-            Lich theo gio
+            Lịch theo giờ
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -376,7 +376,7 @@ export default function CalendarPage() {
             {range.days.map((day) => (
               <div key={day.toISOString()} className="border-b border-l bg-muted/40 p-2 text-center">
                 <div className="text-sm font-medium">{formatDay(day)}</div>
-                {isSameDay(day, new Date()) && <div className="text-xs text-primary">Hom nay</div>}
+                {isSameDay(day, new Date()) && <div className="text-xs text-primary">Hôm nay</div>}
               </div>
             ))}
 
@@ -409,8 +409,8 @@ export default function CalendarPage() {
                                 size="icon"
                                 className="h-7 w-7"
                                 onClick={() => completeTask(item.sourceId!)}
-                                aria-label="Complete task"
-                                title="Complete task"
+                                aria-label="Hoàn thành công việc"
+                                title="Hoàn thành công việc"
                               >
                                 <Check className="h-3 w-3" />
                               </Button>
@@ -420,8 +420,8 @@ export default function CalendarPage() {
                                 size="icon"
                                 className="h-7 w-7"
                                 onClick={() => setSelectedTaskId(item.sourceId!)}
-                                aria-label="Edit task"
-                                title="Edit task"
+                                aria-label="Chỉnh sửa công việc"
+                                title="Chỉnh sửa công việc"
                               >
                                 <Edit2 className="h-3 w-3" />
                               </Button>
@@ -435,8 +435,8 @@ export default function CalendarPage() {
                                 size="icon"
                                 className="h-7 w-7"
                                 onClick={() => setSelectedEventId(item.sourceId!)}
-                                aria-label="Edit event"
-                                title="Edit event"
+                                aria-label="Chỉnh sửa sự kiện"
+                                title="Chỉnh sửa sự kiện"
                               >
                                 <Edit2 className="h-3 w-3" />
                               </Button>
@@ -454,18 +454,18 @@ export default function CalendarPage() {
       </Card>
 
       <Dialog open={Boolean(selectedTask)} onOpenChange={(open) => !open && setSelectedTaskId(null)}>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
-            <DialogTitle>Edit task</DialogTitle>
+            <DialogTitle>Chỉnh sửa công việc</DialogTitle>
           </DialogHeader>
           {selectedTask && (
             <form onSubmit={updateTask} className="grid gap-3">
               <div className="grid gap-1">
-                <Label htmlFor="calendar-edit-title">Title</Label>
+                <Label htmlFor="calendar-edit-title">Tiêu đề</Label>
                 <Input id="calendar-edit-title" name="title" defaultValue={selectedTask.title} required />
               </div>
               <div className="grid gap-1">
-                <Label htmlFor="calendar-edit-description">Description</Label>
+                <Label htmlFor="calendar-edit-description">Mô tả</Label>
                 <Textarea
                   id="calendar-edit-description"
                   name="description"
@@ -475,7 +475,7 @@ export default function CalendarPage() {
               </div>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="grid gap-1">
-                  <Label htmlFor="calendar-edit-duration">Minutes</Label>
+                  <Label htmlFor="calendar-edit-duration">Phút</Label>
                   <Input
                     id="calendar-edit-duration"
                     name="duration"
@@ -485,7 +485,7 @@ export default function CalendarPage() {
                   />
                 </div>
                 <div className="grid gap-1">
-                  <Label htmlFor="calendar-edit-priority">Priority</Label>
+                  <Label htmlFor="calendar-edit-priority">Ưu tiên</Label>
                   <Input
                     id="calendar-edit-priority"
                     name="priority"
@@ -498,7 +498,7 @@ export default function CalendarPage() {
               </div>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="grid gap-1">
-                  <Label htmlFor="calendar-edit-deadline">Deadline</Label>
+                  <Label htmlFor="calendar-edit-deadline">Hạn chót</Label>
                   <Input
                     id="calendar-edit-deadline"
                     name="deadline"
@@ -507,7 +507,7 @@ export default function CalendarPage() {
                   />
                 </div>
                 <div className="grid gap-1">
-                  <Label htmlFor="calendar-edit-status">Status</Label>
+                  <Label htmlFor="calendar-edit-status">Trạng thái</Label>
                   <select
                     id="calendar-edit-status"
                     name="status"
@@ -524,7 +524,7 @@ export default function CalendarPage() {
               </div>
               <Button type="submit" className="justify-self-end">
                 <Save className="mr-2 h-4 w-4" />
-                Save
+                Lưu
               </Button>
             </form>
           )}
@@ -532,18 +532,18 @@ export default function CalendarPage() {
       </Dialog>
 
       <Dialog open={Boolean(selectedEvent)} onOpenChange={(open) => !open && setSelectedEventId(null)}>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
-            <DialogTitle>Edit event</DialogTitle>
+            <DialogTitle>Chỉnh sửa sự kiện</DialogTitle>
           </DialogHeader>
           {selectedEvent && (
             <form onSubmit={updateEvent} className="grid gap-3">
               <div className="grid gap-1">
-                <Label htmlFor="calendar-edit-event-title">Title</Label>
+                <Label htmlFor="calendar-edit-event-title">Tiêu đề</Label>
                 <Input id="calendar-edit-event-title" name="title" defaultValue={selectedEvent.title} required />
               </div>
               <div className="grid gap-1">
-                <Label htmlFor="calendar-edit-event-description">Description</Label>
+                <Label htmlFor="calendar-edit-event-description">Mô tả</Label>
                 <Textarea
                   id="calendar-edit-event-description"
                   name="description"
@@ -553,7 +553,7 @@ export default function CalendarPage() {
               </div>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="grid gap-1">
-                  <Label htmlFor="calendar-edit-event-start">Start</Label>
+                  <Label htmlFor="calendar-edit-event-start">Bắt đầu</Label>
                   <Input
                     id="calendar-edit-event-start"
                     name="startTime"
@@ -563,7 +563,7 @@ export default function CalendarPage() {
                   />
                 </div>
                 <div className="grid gap-1">
-                  <Label htmlFor="calendar-edit-event-end">End</Label>
+                  <Label htmlFor="calendar-edit-event-end">Kết thúc</Label>
                   <Input
                     id="calendar-edit-event-end"
                     name="endTime"
@@ -575,7 +575,7 @@ export default function CalendarPage() {
               </div>
               <Button type="submit" className="justify-self-end">
                 <Save className="mr-2 h-4 w-4" />
-                Save
+                Lưu
               </Button>
             </form>
           )}
@@ -583,68 +583,68 @@ export default function CalendarPage() {
       </Dialog>
 
       <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
-            <DialogTitle>Create task</DialogTitle>
+            <DialogTitle>Tạo công việc</DialogTitle>
           </DialogHeader>
           <form onSubmit={createTask} className="grid gap-3">
             <div className="grid gap-1">
-              <Label htmlFor="calendar-task-title">Title</Label>
+              <Label htmlFor="calendar-task-title">Tiêu đề</Label>
               <Input id="calendar-task-title" name="title" required />
             </div>
             <div className="grid gap-1">
-              <Label htmlFor="calendar-task-description">Description</Label>
+              <Label htmlFor="calendar-task-description">Mô tả</Label>
               <Textarea id="calendar-task-description" name="description" rows={2} />
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <div className="grid gap-1">
-                <Label htmlFor="calendar-task-duration">Minutes</Label>
+                <Label htmlFor="calendar-task-duration">Phút</Label>
                 <Input id="calendar-task-duration" name="duration" type="number" min={1} defaultValue={30} />
               </div>
               <div className="grid gap-1">
-                <Label htmlFor="calendar-task-priority">Priority</Label>
+                <Label htmlFor="calendar-task-priority">Ưu tiên</Label>
                 <Input id="calendar-task-priority" name="priority" type="number" min={1} max={5} defaultValue={2} />
               </div>
             </div>
             <div className="grid gap-1">
-              <Label htmlFor="calendar-task-deadline">Deadline</Label>
+              <Label htmlFor="calendar-task-deadline">Hạn chót</Label>
               <Input id="calendar-task-deadline" name="deadline" type="datetime-local" />
             </div>
             <Button type="submit" className="justify-self-end">
               <Plus className="mr-2 h-4 w-4" />
-              Create
+              Tạo
             </Button>
           </form>
         </DialogContent>
       </Dialog>
 
       <Dialog open={isEventDialogOpen} onOpenChange={setIsEventDialogOpen}>
-        <DialogContent>
+        <DialogContent aria-describedby={undefined}>
           <DialogHeader>
-            <DialogTitle>Create event</DialogTitle>
+            <DialogTitle>Tạo sự kiện</DialogTitle>
           </DialogHeader>
           <form onSubmit={createEvent} className="grid gap-3">
             <div className="grid gap-1">
-              <Label htmlFor="calendar-event-title">Title</Label>
+              <Label htmlFor="calendar-event-title">Tiêu đề</Label>
               <Input id="calendar-event-title" name="title" required />
             </div>
             <div className="grid gap-1">
-              <Label htmlFor="calendar-event-description">Description</Label>
+              <Label htmlFor="calendar-event-description">Mô tả</Label>
               <Textarea id="calendar-event-description" name="description" rows={2} />
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <div className="grid gap-1">
-                <Label htmlFor="calendar-event-start">Start</Label>
+                <Label htmlFor="calendar-event-start">Bắt đầu</Label>
                 <Input id="calendar-event-start" name="startTime" type="datetime-local" required />
               </div>
               <div className="grid gap-1">
-                <Label htmlFor="calendar-event-end">End</Label>
+                <Label htmlFor="calendar-event-end">Kết thúc</Label>
                 <Input id="calendar-event-end" name="endTime" type="datetime-local" required />
               </div>
             </div>
             <Button type="submit" className="justify-self-end">
               <Plus className="mr-2 h-4 w-4" />
-              Create
+              Tạo
             </Button>
           </form>
         </DialogContent>

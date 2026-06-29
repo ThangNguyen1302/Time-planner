@@ -4,12 +4,12 @@ export default async function AssistantPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Assistant tam thoi vo hieu hoa</CardTitle>
+        <CardTitle>Assistant tạm thời vô hiệu hóa</CardTitle>
         <CardDescription>
-          Tinh nang tro ly se duoc dua sang backend Java va mo lai sau khi hoan thanh API.
+          Tính năng trợ lý sẽ được đưa sang backend Java và mở lại sau khi hoàn thành API.
         </CardDescription>
       </CardHeader>
-      <CardContent>Endpoint de xuat: POST /api/v1/assistant/chat.</CardContent>
+      <CardContent>Endpoint đề xuất: POST /api/v1/assistant/chat.</CardContent>
     </Card>
   )
 }

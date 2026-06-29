@@ -69,7 +69,7 @@ export default function SettingsPage() {
       )}&timezone=Asia/Ho_Chi_Minh`,
     )
     const events = Array.isArray(unwrapData(payload as { data: unknown[] })) ? unwrapData(payload as { data: unknown[] }) : []
-    setGoogleMessage(`Da dong bo ${events.length} su kien Google trong tuan nay.`)
+    setGoogleMessage(`Đã đồng bộ ${events.length} sự kiện Google trong tuần này.`)
   }
 
   const disconnectGoogleCalendar = async () => {
@@ -82,8 +82,8 @@ export default function SettingsPage() {
     <div className="grid gap-4">
       <Card>
         <CardHeader>
-          <CardTitle>Settings</CardTitle>
-          <CardDescription>Preferences are loaded from /api/v1/preferences.</CardDescription>
+          <CardTitle>Cài đặt</CardTitle>
+          <CardDescription>Cấu hình các tùy chọn tài khoản và múi giờ.</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading && <Loader2 className="h-5 w-5 animate-spin" />}
@@ -91,28 +91,28 @@ export default function SettingsPage() {
           {preferences && (
             <form onSubmit={handleSave} className="grid max-w-2xl gap-4 md:grid-cols-2">
               <div className="grid gap-1">
-                <Label htmlFor="wakeTime">Wake time</Label>
+                <Label htmlFor="wakeTime">Giờ thức giấc</Label>
                 <Input id="wakeTime" name="wakeTime" type="time" defaultValue={preferences.wake_time} />
               </div>
               <div className="grid gap-1">
-                <Label htmlFor="sleepTime">Sleep time</Label>
+                <Label htmlFor="sleepTime">Giờ đi ngủ</Label>
                 <Input id="sleepTime" name="sleepTime" type="time" defaultValue={preferences.sleep_time} />
               </div>
               <div className="grid gap-1">
-                <Label htmlFor="workStart">Work start</Label>
+                <Label htmlFor="workStart">Bắt đầu làm việc</Label>
                 <Input id="workStart" name="workStart" type="time" defaultValue={preferences.work_start} />
               </div>
               <div className="grid gap-1">
-                <Label htmlFor="workEnd">Work end</Label>
+                <Label htmlFor="workEnd">Kết thúc làm việc</Label>
                 <Input id="workEnd" name="workEnd" type="time" defaultValue={preferences.work_end} />
               </div>
               <div className="grid gap-1 md:col-span-2">
-                <Label htmlFor="timezone">Timezone</Label>
+                <Label htmlFor="timezone">Múi giờ</Label>
                 <Input id="timezone" name="timezone" defaultValue={preferences.timezone || "Asia/Ho_Chi_Minh"} />
               </div>
               <Button type="submit" className="md:col-span-2 md:w-fit">
                 <Save className="mr-2 h-4 w-4" />
-                Save
+                Lưu
               </Button>
             </form>
           )}
@@ -122,7 +122,7 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Google Calendar</CardTitle>
-          <CardDescription>Quan ly ket noi va dong bo lich Google.</CardDescription>
+          <CardDescription>Quản lý kết nối và đồng bộ lịch Google.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {googleStatus.isLoading && <Loader2 className="h-5 w-5 animate-spin" />}
@@ -133,17 +133,17 @@ export default function SettingsPage() {
                 <>
                   <Button type="button" variant="outline" onClick={syncGoogleCalendar}>
                     <RefreshCw className="mr-2 h-4 w-4" />
-                    Dong bo Google
+                    Đồng bộ Google
                   </Button>
                   <Button type="button" variant="ghost" onClick={disconnectGoogleCalendar}>
                     <Unlink className="mr-2 h-4 w-4" />
-                    Ngat ket noi
+                    Ngắt kết nối
                   </Button>
                 </>
               ) : (
                 <Button type="button" variant="outline" onClick={connectGoogleCalendar}>
                   <CalendarDays className="mr-2 h-4 w-4" />
-                  Ket noi Google
+                  Kết nối Google
                 </Button>
               )}
             </div>

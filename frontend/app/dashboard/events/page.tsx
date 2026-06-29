@@ -86,30 +86,30 @@ export default function EventsPage() {
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Events</CardTitle>
-          <CardDescription>Create and edit scheduled events.</CardDescription>
+          <CardTitle>Sự kiện</CardTitle>
+          <CardDescription>Tạo và chỉnh sửa sự kiện trong lịch.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleCreate} className="grid gap-3 lg:grid-cols-[1fr_1fr_190px_190px_auto]">
             <div className="grid gap-1">
-              <Label htmlFor="title">Title</Label>
+              <Label htmlFor="title">Tiêu đề</Label>
               <Input id="title" name="title" required />
             </div>
             <div className="grid gap-1">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Mô tả</Label>
               <Input id="description" name="description" />
             </div>
             <div className="grid gap-1">
-              <Label htmlFor="startTime">Start</Label>
+              <Label htmlFor="startTime">Bắt đầu</Label>
               <Input id="startTime" name="startTime" type="datetime-local" required />
             </div>
             <div className="grid gap-1">
-              <Label htmlFor="endTime">End</Label>
+              <Label htmlFor="endTime">Kết thúc</Label>
               <Input id="endTime" name="endTime" type="datetime-local" required />
             </div>
             <Button type="submit" className="self-end">
               <Plus className="mr-2 h-4 w-4" />
-              Add
+              Thêm
             </Button>
           </form>
         </CardContent>
@@ -117,26 +117,26 @@ export default function EventsPage() {
 
       <Card>
         <CardContent className="pt-6">
-          <div className="mb-4 grid gap-3 lg:grid-cols-[1fr_180px_180px_120px]">
+          <div className="mb-4 grid gap-3 lg:grid-cols-[1fr_180px_180px_140px]">
             <div className="grid gap-1">
-              <Label htmlFor="event-search">Search</Label>
+              <Label htmlFor="event-search">Tìm kiếm</Label>
               <Input
                 id="event-search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Title or description"
+                placeholder="Tiêu đề hoặc mô tả"
               />
             </div>
             <div className="grid gap-1">
-              <Label htmlFor="event-from">From</Label>
+              <Label htmlFor="event-from">Từ ngày</Label>
               <Input id="event-from" type="datetime-local" value={fromFilter} onChange={(event) => setFromFilter(event.target.value)} />
             </div>
             <div className="grid gap-1">
-              <Label htmlFor="event-to">To</Label>
+              <Label htmlFor="event-to">Đến ngày</Label>
               <Input id="event-to" type="datetime-local" value={toFilter} onChange={(event) => setToFilter(event.target.value)} />
             </div>
             <div className="grid gap-1">
-              <Label>Page size</Label>
+              <Label>Số lượng/trang</Label>
               <Select
                 value={String(pageSize)}
                 onValueChange={(value) => {
@@ -160,7 +160,7 @@ export default function EventsPage() {
 
           {isLoading && <Loader2 className="h-5 w-5 animate-spin" />}
           {error && <p className="text-sm text-destructive">{error.message}</p>}
-          {!isLoading && !filteredEvents.length && <p className="text-sm text-muted-foreground">No events found.</p>}
+          {!isLoading && !filteredEvents.length && <p className="text-sm text-muted-foreground">Không tìm thấy sự kiện nào.</p>}
           <div className="space-y-3">
             {filteredEvents.map((item) => {
               const isEditing = editingId === item.id
@@ -170,11 +170,11 @@ export default function EventsPage() {
                   {isEditing ? (
                     <form onSubmit={(event) => handleUpdate(event, item.id)} className="grid gap-3 lg:grid-cols-6">
                       <div className="grid gap-1 lg:col-span-2">
-                        <Label htmlFor={`event-title-${item.id}`}>Title</Label>
+                        <Label htmlFor={`event-title-${item.id}`}>Tiêu đề</Label>
                         <Input id={`event-title-${item.id}`} name="title" defaultValue={item.title} required />
                       </div>
                       <div className="grid gap-1 lg:col-span-4">
-                        <Label htmlFor={`event-description-${item.id}`}>Description</Label>
+                        <Label htmlFor={`event-description-${item.id}`}>Mô tả</Label>
                         <Textarea
                           id={`event-description-${item.id}`}
                           name="description"
@@ -183,7 +183,7 @@ export default function EventsPage() {
                         />
                       </div>
                       <div className="grid gap-1 lg:col-span-2">
-                        <Label htmlFor={`event-start-${item.id}`}>Start</Label>
+                        <Label htmlFor={`event-start-${item.id}`}>Bắt đầu</Label>
                         <Input
                           id={`event-start-${item.id}`}
                           name="startTime"
@@ -193,7 +193,7 @@ export default function EventsPage() {
                         />
                       </div>
                       <div className="grid gap-1 lg:col-span-2">
-                        <Label htmlFor={`event-end-${item.id}`}>End</Label>
+                        <Label htmlFor={`event-end-${item.id}`}>Kết thúc</Label>
                         <Input
                           id={`event-end-${item.id}`}
                           name="endTime"
@@ -205,11 +205,11 @@ export default function EventsPage() {
                       <div className="flex items-end gap-2 lg:col-span-2">
                         <Button type="submit" size="sm">
                           <Save className="mr-2 h-4 w-4" />
-                          Save
+                          Lưu
                         </Button>
                         <Button type="button" variant="outline" size="sm" onClick={() => setEditingId(null)}>
                           <X className="mr-2 h-4 w-4" />
-                          Cancel
+                          Hủy
                         </Button>
                       </div>
                     </form>
@@ -236,12 +236,12 @@ export default function EventsPage() {
           </div>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
             <span>
-              Page {page + 1} / {totalPages}
-              {typeof meta.totalElements === "number" ? ` - ${meta.totalElements} events` : ""}
+              Trang {page + 1} / {totalPages}
+              {typeof meta.totalElements === "number" ? ` - ${meta.totalElements} sự kiện` : ""}
             </span>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" disabled={page <= 0} onClick={() => setPage((value) => Math.max(0, value - 1))}>
-                Previous
+                Trước
               </Button>
               <Button
                 variant="outline"
@@ -249,7 +249,7 @@ export default function EventsPage() {
                 disabled={page + 1 >= totalPages}
                 onClick={() => setPage((value) => value + 1)}
               >
-                Next
+                Sau
               </Button>
             </div>
           </div>

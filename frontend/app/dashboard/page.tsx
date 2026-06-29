@@ -57,8 +57,8 @@ function formatTime(date: Date) {
 
 function priorityLabel(priority: number) {
   if (priority >= 4) return "Cao"
-  if (priority <= 1) return "Thap"
-  return "Vua"
+  if (priority <= 1) return "Thấp"
+  return "Vừa"
 }
 
 const statusColors: Record<string, string> = {
@@ -133,7 +133,7 @@ export default function DashboardPage() {
   const stats = [
     { label: "Tasks", value: taskItems.length },
     { label: "Events", value: eventItems.length },
-    { label: "Task chua xep", value: unscheduledTasks.length },
+    { label: "Task chưa xếp", value: unscheduledTasks.length },
   ]
   const statusData = Object.entries(
     taskItems.reduce<Record<string, number>>((acc, task) => {
@@ -172,7 +172,7 @@ export default function DashboardPage() {
       <div className="grid gap-4 xl:grid-cols-3">
         <Card>
           <CardHeader className="py-4">
-            <CardTitle className="text-base">Trang thai task</CardTitle>
+            <CardTitle className="text-base">Trạng thái task</CardTitle>
           </CardHeader>
           <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -211,7 +211,7 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader className="py-4">
-            <CardTitle className="text-base">Lich trong tuan</CardTitle>
+            <CardTitle className="text-base">Lịch trong tuần</CardTitle>
           </CardHeader>
           <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -232,11 +232,11 @@ export default function DashboardPage() {
           <CardHeader className="py-4">
             <CardTitle className="flex items-center gap-2 text-base">
               <ListTodo className="h-4 w-4" />
-              Task chua xep lich
+              Task chưa xếp lịch
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {unscheduledTasks.length === 0 && <p className="text-sm text-muted-foreground">Khong co task dang cho.</p>}
+            {unscheduledTasks.length === 0 && <p className="text-sm text-muted-foreground">Không có task đang chờ.</p>}
             {unscheduledTasks.map((task) => (
               <div key={task.id} className="rounded-md border p-3">
                 <div className="flex items-start justify-between gap-2">
@@ -244,7 +244,7 @@ export default function DashboardPage() {
                   <Badge variant="outline">{priorityLabel(task.priority)}</Badge>
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {task.duration} phut{task.deadline ? ` - han ${new Date(task.deadline).toLocaleString("vi-VN")}` : ""}
+                  {task.duration} phút{task.deadline ? ` - hạn ${new Date(task.deadline).toLocaleString("vi-VN")}` : ""}
                 </p>
               </div>
             ))}
@@ -255,12 +255,12 @@ export default function DashboardPage() {
           <CardHeader className="py-4">
             <CardTitle className="flex items-center gap-2 text-base">
               <CheckSquare className="h-4 w-4" />
-              Su kien trong tuan
+              Sự kiện trong tuần
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {weekItems.length === 0 && (
-              <p className="text-sm text-muted-foreground">Chua co block hay event nao trong tuan nay.</p>
+              <p className="text-sm text-muted-foreground">Chưa có block hay event nào trong tuần này.</p>
             )}
             {weekItems.slice(0, 8).map((item) => (
               <div key={item.id} className="rounded-md border p-3" style={{ borderLeft: `4px solid ${item.color}` }}>
