@@ -15,6 +15,11 @@ spring:
     show-sql: true           # Tắt khi lên production
   flyway:
     enabled: true
+  cache:
+    type: redis
+  data:
+    redis:
+      url: ${REDIS_URL:redis://localhost:6379}
 
 logging:
   level:

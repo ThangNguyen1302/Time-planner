@@ -16,6 +16,7 @@ calendar/
 - Java 26
 - Node.js 20 trở lên
 - MySQL 8
+- Redis (chạy local qua Docker: `docker run -d -p 6379:6379 redis`)
 
 ## Chạy dự án
 

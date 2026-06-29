@@ -132,6 +132,7 @@ public class GoogleCalendarService {
     /**
      * Get events from ALL visible calendars.
      */
+    @org.springframework.cache.annotation.Cacheable(value = "googleCalendarEvents", key = "#userId + '_' + #from.toString() + '_' + #to.toString()")
     public List<GoogleCalendarEventDto> getAllEvents(String userId, LocalDateTime from,
                                                       LocalDateTime to, String timeZone) {
         List<Map<String, Object>> calendars = listCalendars(userId);
