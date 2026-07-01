@@ -53,4 +53,4 @@ Các lớp chính:
 Kết quả hiện tại: `17` test, `0` failure, `0` error.
 
 Lệnh `.\mvnw.cmd test` chạy toàn bộ suite, trong đó `BackendApplicationTests`
-vẫn cần cấu hình MySQL hợp lệ vì nó khởi động toàn bộ Spring context.
+vẫn cần cấu hình PostgreSQL hợp lệ vì nó khởi động toàn bộ Spring context.

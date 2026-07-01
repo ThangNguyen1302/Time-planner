@@ -6,7 +6,7 @@ CREATE TABLE users (
   email         VARCHAR(255) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
   created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  updated_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ============================================================
@@ -22,7 +22,7 @@ CREATE TABLE user_preferences (
   timezone    VARCHAR(64)  NOT NULL DEFAULT 'Asia/Ho_Chi_Minh',
   rest_days   VARCHAR(32)  NOT NULL DEFAULT '0,6',
   created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  updated_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_prefs_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -35,13 +35,13 @@ CREATE TABLE tasks (
   title        VARCHAR(255) NOT NULL,
   description  TEXT         NULL,
   duration     INT          NOT NULL DEFAULT 30,
-  deadline     DATETIME     NULL,
+  deadline     TIMESTAMP    NULL,
   priority     INT          NOT NULL DEFAULT 2,
   status       VARCHAR(32)  NOT NULL DEFAULT 'pending',
   color        VARCHAR(16)  NOT NULL DEFAULT '#3B82F6',
-  completed_at DATETIME     NULL,
+  completed_at TIMESTAMP    NULL,
   created_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  updated_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_tasks_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -53,14 +53,14 @@ CREATE TABLE events (
   user_id         CHAR(36)     NOT NULL,
   title           VARCHAR(255) NOT NULL,
   description     TEXT         NULL,
-  start_time      DATETIME     NOT NULL,
-  end_time        DATETIME     NOT NULL,
+  start_time      TIMESTAMP    NOT NULL,
+  end_time        TIMESTAMP    NOT NULL,
   is_recurring    BOOLEAN      NOT NULL DEFAULT FALSE,
   recurrence_rule VARCHAR(255) NULL,
   color           VARCHAR(16)  NOT NULL DEFAULT '#8B5CF6',
   external_id     VARCHAR(255) NULL,
   created_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  updated_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_events_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -79,7 +79,7 @@ CREATE TABLE habits (
   color                VARCHAR(16)  NOT NULL DEFAULT '#10B981',
   is_active            BOOLEAN      NOT NULL DEFAULT TRUE,
   created_at           TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at           TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  updated_at           TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_habits_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -87,7 +87,7 @@ CREATE TABLE habit_completions (
   id           CHAR(36)  PRIMARY KEY,
   habit_id     CHAR(36)  NOT NULL,
   user_id      CHAR(36)  NOT NULL,
-  completed_at DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  completed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   notes        TEXT      NULL,
   CONSTRAINT fk_hc_habit FOREIGN KEY (habit_id) REFERENCES habits(id) ON DELETE CASCADE,
   CONSTRAINT fk_hc_user  FOREIGN KEY (user_id)  REFERENCES users(id) ON DELETE CASCADE
@@ -100,14 +100,14 @@ CREATE TABLE time_blocks (
   id                 CHAR(36)     PRIMARY KEY,
   user_id            CHAR(36)     NOT NULL,
   title              VARCHAR(255) NOT NULL,
-  start_time         DATETIME     NOT NULL,
-  end_time           DATETIME     NOT NULL,
+  start_time         TIMESTAMP    NOT NULL,
+  end_time           TIMESTAMP    NOT NULL,
   block_type         VARCHAR(16)  NOT NULL,
   source_id          CHAR(36)     NULL,
   status             VARCHAR(32)  NOT NULL DEFAULT 'scheduled',
   color              VARCHAR(16)  NOT NULL DEFAULT '#6366F1',
   is_manual_override BOOLEAN      NOT NULL DEFAULT FALSE,
   created_at         TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at         TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  updated_at         TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_tb_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

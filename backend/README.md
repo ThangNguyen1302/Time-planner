@@ -1,7 +1,7 @@
 # TimePlanner Backend
 
 REST API của TimePlanner, xây dựng bằng Spring Boot, Spring Security, JPA,
-Flyway và MySQL.
+Flyway và PostgreSQL.
 
 ## Tính năng
 
@@ -14,8 +14,8 @@ Flyway và MySQL.
 
 ## Yêu cầu
 
-- Java 26
-- MySQL 8
+- Java 21
+- PostgreSQL 16
 
 Không cần cài Maven riêng vì dự án có Maven Wrapper.
 
@@ -24,16 +24,14 @@ Không cần cài Maven riêng vì dự án có Maven Wrapper.
 Tạo database:
 
 ```sql
-CREATE DATABASE timeplanner
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE timeplanner;
 ```
 
 Cấu hình kết nối được đọc từ `backend/.env`:
 
 ```text
-URL:      jdbc:mysql://localhost:3306/timeplanner
-Username: root
+URL:      jdbc:postgresql://localhost:5432/timeplanner
+Username: postgres
 Password: giá trị DB_PASSWORD
 ```
 

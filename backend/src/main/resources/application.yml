@@ -3,8 +3,8 @@ server:
 
 spring:
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/timeplanner?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
-    username: ${DB_USERNAME:root}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/timeplanner}
+    username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:}
   jpa:
     hibernate:

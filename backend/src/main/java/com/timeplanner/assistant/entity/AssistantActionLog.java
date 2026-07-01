@@ -27,10 +27,10 @@ public class AssistantActionLog {
     @Column(name = "action_type", nullable = false, length = 64)
     private String actionType;
 
-    @Column(name = "action_data", columnDefinition = "json", nullable = false)
+    @Column(name = "action_data", columnDefinition = "TEXT", nullable = false)
     private String actionData;
 
-    @Column(name = "result", columnDefinition = "json")
+    @Column(name = "result", columnDefinition = "TEXT")
     private String result;
 
     @Column(name = "can_undo", nullable = false)

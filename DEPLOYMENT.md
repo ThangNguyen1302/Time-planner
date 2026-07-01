@@ -2,7 +2,7 @@
 
 Huong dan nay dung luong de trien khai don gian nhat:
 
-- MySQL va backend Spring Boot tren Railway.
+- PostgreSQL va backend Spring Boot tren Railway.
 - Frontend Next.js tren Vercel.
 
 Ban can co tai khoan GitHub, Railway, Vercel va da push repo len GitHub.
@@ -25,18 +25,18 @@ npm run build
 
 Neu cac lenh nay qua, hay bat dau deploy.
 
-## 2. Tao database MySQL tren Railway
+## 2. Tao database PostgreSQL tren Railway
 
 1. Vao Railway va tao project moi.
 2. Chon `Add Service`.
 3. Chon `Database`.
-4. Chon `MySQL`.
-5. Mo tab `Variables` cua MySQL service va ghi lai cac bien:
-   - `MYSQLHOST`
-   - `MYSQLPORT`
-   - `MYSQLDATABASE`
-   - `MYSQLUSER`
-   - `MYSQLPASSWORD`
+4. Chon `PostgreSQL`.
+5. Mo tab `Variables` cua PostgreSQL service va ghi lai cac bien:
+   - `PGHOST`
+   - `PGPORT`
+   - `PGDATABASE`
+   - `PGUSER`
+   - `PGPASSWORD`
 
 Backend se dung cac gia tri nay de tao JDBC URL.
 
@@ -68,9 +68,9 @@ java -jar target/backend-0.0.1-SNAPSHOT.jar
 6. Them environment variables cho backend:
 
 ```env
-DB_URL=jdbc:mysql://${{MYSQLHOST}}:${{MYSQLPORT}}/${{MYSQLDATABASE}}?useSSL=true&serverTimezone=UTC
-DB_USERNAME=${{MYSQLUSER}}
-DB_PASSWORD=${{MYSQLPASSWORD}}
+DB_URL=jdbc:postgresql://${{PGHOST}}:${{PGPORT}}/${{PGDATABASE}}
+DB_USERNAME=${{PGUSER}}
+DB_PASSWORD=${{PGPASSWORD}}
 
 JWT_SECRET=<chuoi-bi-mat-random-it-nhat-32-byte>
 
@@ -81,7 +81,7 @@ GEMINI_API_KEY=<api-key-neu-co>
 GEMINI_MODEL=gemini-2.5-flash
 ```
 
-Neu Railway khong tu thay the bien theo cu phap `${{...}}`, copy gia tri that tu MySQL service va dien truc tiep vao `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`.
+Neu Railway khong tu thay the bien theo cu phap `${{...}}`, copy gia tri that tu PostgreSQL service va dien truc tiep vao `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`.
 
 7. Deploy backend.
 8. Mo domain backend Railway, kiem tra:
@@ -91,7 +91,7 @@ https://<backend-domain>/api/v1/health
 https://<backend-domain>/actuator/health
 ```
 
-Neu health endpoint tra ve OK, backend da chay. Flyway se tu tao bang trong MySQL khi backend khoi dong.
+Neu health endpoint tra ve OK, backend da chay. Flyway se tu tao bang trong PostgreSQL khi backend khoi dong.
 
 ## 4. Deploy frontend tren Vercel
 
@@ -170,9 +170,5 @@ Neu frontend bao loi ket noi backend, hay kiem tra:
 
 ## 8. Luu y ve Java version
 
-Backend hien cau hinh Java 26 trong `backend/pom.xml`. Neu Railway bao loi khong co Java 26, co 2 cach:
-
-1. Doi sang host ho tro Java 26 hoac dung Docker image Java 26.
-2. Neu code khong dung tinh nang rieng cua Java 26, ha `java.version` ve Java 21 va build lai.
-
-Nen thu deploy truoc. Chi doi Java version khi build log bao loi ro rang ve JDK.
+Backend hien cau hinh Java 21 trong `backend/pom.xml` va Dockerfile cung dung Java 21.
+Neu deploy bang Docker, nen giu Java 21 de khop voi image build/runtime.

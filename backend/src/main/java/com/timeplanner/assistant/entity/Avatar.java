@@ -35,7 +35,7 @@ public class Avatar {
     @Column(name = "is_active", nullable = false)
     private boolean isActive;
 
-    @Column(columnDefinition = "json")
+    @Column(columnDefinition = "TEXT")
     private String config;
 
     @Column(name = "created_at", updatable = false)

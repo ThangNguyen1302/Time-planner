@@ -32,10 +32,10 @@ public class Message {
     @Column(length = 32)
     private String mood;
 
-    @Column(columnDefinition = "json")
+    @Column(columnDefinition = "TEXT")
     private String actions;
 
-    @Column(name = "quick_replies", columnDefinition = "json")
+    @Column(name = "quick_replies", columnDefinition = "TEXT")
     private String quickReplies;
 
     @Column(name = "is_proactive", nullable = false)

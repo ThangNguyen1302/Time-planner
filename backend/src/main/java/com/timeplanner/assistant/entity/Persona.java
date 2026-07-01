@@ -38,7 +38,7 @@ public class Persona {
     @Column(nullable = false)
     private int strictness;
 
-    @Column(name = "style_rules", columnDefinition = "json")
+    @Column(name = "style_rules", columnDefinition = "TEXT")
     private String styleRules;
 
     @Column(name = "is_preset", nullable = false)

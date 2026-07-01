@@ -24,10 +24,10 @@ public class UserMemory {
     @Column(name = "memory_type", nullable = false, length = 32)
     private String memoryType;
 
-    @Column(name = "`key`", nullable = false, length = 255)
+    @Column(name = "key", nullable = false, length = 255)
     private String key;
 
-    @Column(name = "value", columnDefinition = "json", nullable = false)
+    @Column(name = "value", columnDefinition = "TEXT", nullable = false)
     private String value;
 
     @Column(name = "confidence", nullable = false, precision = 3, scale = 2)

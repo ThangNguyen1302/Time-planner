@@ -7,30 +7,28 @@ time block, trợ lý AI và tích hợp Google Calendar.
 
 ```text
 calendar/
-├── backend/    # Spring Boot, Spring Security, JPA, Flyway và MySQL
+├── backend/    # Spring Boot, Spring Security, JPA, Flyway và PostgreSQL
 └── frontend/   # Next.js, React và TypeScript
 ```
 
 ## Yêu cầu
 
-- Java 26
+- Java 21
 - Node.js 20 trở lên
-- MySQL 8
+- PostgreSQL 16
 - Redis (chạy local qua Docker: `docker run -d -p 6379:6379 redis`)
 
 ## Chạy dự án
 
-### 1. Chuẩn bị MySQL
+### 1. Chuẩn bị PostgreSQL
 
 Tạo database:
 
 ```sql
-CREATE DATABASE timeplanner
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE timeplanner;
 ```
 
-Backend mặc định kết nối bằng tài khoản `root` tại `localhost:3306`. Tạo
+Backend mặc định kết nối bằng tài khoản `postgres` tại `localhost:5432`. Tạo
 `backend/.env` từ `backend/.env.example`, sau đó điền `DB_PASSWORD` và
 `JWT_SECRET` trước khi chạy.
 
