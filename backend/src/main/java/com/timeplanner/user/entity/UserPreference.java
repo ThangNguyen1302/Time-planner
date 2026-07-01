@@ -2,7 +2,9 @@ package com.timeplanner.user.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.time.LocalTime;
 
