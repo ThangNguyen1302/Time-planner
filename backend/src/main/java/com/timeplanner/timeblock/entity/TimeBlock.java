@@ -15,10 +15,10 @@ public class TimeBlock {
 
     @Id
     @UuidGenerator
-    @Column(length = 36)
+    @Column(columnDefinition = "CHAR(36)")
     private String id;
 
-    @Column(name = "user_id", nullable = false, length = 36)
+    @Column(name = "user_id", nullable = false, columnDefinition = "CHAR(36)")
     private String userId;
 
     @Column(nullable = false)
@@ -33,7 +33,7 @@ public class TimeBlock {
     @Column(name = "block_type", nullable = false, length = 16)
     private String blockType;
 
-    @Column(name = "source_id", length = 36)
+    @Column(name = "source_id", columnDefinition = "CHAR(36)")
     private String sourceId;
 
     @Column(nullable = false, length = 32)

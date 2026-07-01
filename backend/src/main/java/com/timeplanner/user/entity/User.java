@@ -14,7 +14,7 @@ public class User {
 
     @Id
     @UuidGenerator
-    @Column(length = 36)
+    @Column(columnDefinition = "CHAR(36)")
     private String id;
 
     @Column(nullable = false, unique = true)

@@ -15,10 +15,10 @@ public class Habit {
 
     @Id
     @UuidGenerator
-    @Column(length = 36)
+    @Column(columnDefinition = "CHAR(36)")
     private String id;
 
-    @Column(name = "user_id", nullable = false, length = 36)
+    @Column(name = "user_id", nullable = false, columnDefinition = "CHAR(36)")
     private String userId;
 
     @Column(nullable = false)

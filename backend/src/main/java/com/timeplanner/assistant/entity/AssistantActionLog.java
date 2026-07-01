@@ -15,13 +15,13 @@ public class AssistantActionLog {
 
     @Id
     @UuidGenerator
-    @Column(length = 36)
+    @Column(columnDefinition = "CHAR(36)")
     private String id;
 
-    @Column(name = "user_id", nullable = false, length = 36)
+    @Column(name = "user_id", nullable = false, columnDefinition = "CHAR(36)")
     private String userId;
 
-    @Column(name = "message_id", length = 36)
+    @Column(name = "message_id", columnDefinition = "CHAR(36)")
     private String messageId;
 
     @Column(name = "action_type", nullable = false, length = 64)
