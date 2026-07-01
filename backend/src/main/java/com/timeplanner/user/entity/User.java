@@ -16,6 +16,7 @@ public class User {
 
     @Id
     @UuidGenerator
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Column(columnDefinition = "CHAR(36)")
     private String id;
 

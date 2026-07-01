@@ -16,12 +16,15 @@ public class HabitCompletion {
 
     @Id
     @UuidGenerator
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Column(columnDefinition = "CHAR(36)")
     private String id;
 
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Column(name = "habit_id", nullable = false, columnDefinition = "CHAR(36)")
     private String habitId;
 
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Column(name = "user_id", nullable = false, columnDefinition = "CHAR(36)")
     private String userId;
 

@@ -17,9 +17,11 @@ public class TimeBlock {
 
     @Id
     @UuidGenerator
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Column(columnDefinition = "CHAR(36)")
     private String id;
 
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Column(name = "user_id", nullable = false, columnDefinition = "CHAR(36)")
     private String userId;
 
@@ -35,6 +37,7 @@ public class TimeBlock {
     @Column(name = "block_type", nullable = false, length = 16)
     private String blockType;
 
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Column(name = "source_id", columnDefinition = "CHAR(36)")
     private String sourceId;
 
