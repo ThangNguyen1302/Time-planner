@@ -40,7 +40,7 @@ export default function SignUpPage() {
 
     try {
       await signUp(email, password)
-      router.push("/auth/sign-up-success")
+      router.push("/auth/login")
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "Đã có lỗi xảy ra")
     } finally {
