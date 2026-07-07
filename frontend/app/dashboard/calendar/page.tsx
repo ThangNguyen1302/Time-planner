@@ -4,7 +4,7 @@ import type React from "react"
 import { useMemo } from "react"
 import { useState } from "react"
 import useSWR from "swr"
-import { AlertCircle, CalendarDays, Check, ChevronLeft, ChevronRight, Clock, Edit2, Loader2, Plus, Save } from "lucide-react"
+import { AlertCircle, CalendarDays, Check, ChevronLeft, ChevronRight, Clock, Edit2, Loader2, Plus, Save, Sparkles } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -91,12 +91,14 @@ function isInWeek(value: Date, from: Date, to: Date) {
   return value >= from && value < to
 }
 
-function formatDay(date: Date) {
-  return `${DAY_LABELS[date.getDay()]} ${date.getDate()}/${date.getMonth() + 1}`
-}
-
 function formatTime(date: Date) {
   return date.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+}
+
+const typeMeta: Record<CalendarItem["type"], { label: string; icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }> }> = {
+  event: { label: "Sự kiện", icon: CalendarDays },
+  task: { label: "Công việc", icon: Check },
+  habit: { label: "Thói quen", icon: Sparkles },
 }
 
 function mapTimeBlocks(blocks: TimeBlock[]) {
@@ -326,16 +328,18 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-normal">Lịch tuần</h1>
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Lịch tuần</h1>
           <p className="text-sm text-muted-foreground">
-            {range.days[0].toLocaleDateString("vi-VN")} - {range.days[6].toLocaleDateString("vi-VN")}
+            {range.days[0].toLocaleDateString("vi-VN", { day: "2-digit", month: "long", year: "numeric" })}{" "}
+            —{" "}
+            {range.days[6].toLocaleDateString("vi-VN", { day: "2-digit", month: "long", year: "numeric" })}
           </p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+        <div className="flex items-center gap-1.5">
+          {isLoading && <Loader2 className="mr-1 h-4 w-4 animate-spin text-muted-foreground" />}
           <Button type="button" size="icon" variant="outline" onClick={() => moveWeek(-1)} aria-label="Tuần trước" title="Tuần trước">
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -345,6 +349,7 @@ export default function CalendarPage() {
           <Button type="button" size="icon" variant="outline" onClick={() => moveWeek(1)} aria-label="Tuần sau" title="Tuần sau">
             <ChevronRight className="h-4 w-4" />
           </Button>
+          <div className="mx-1 h-6 w-px bg-border" />
           <Button type="button" size="sm" onClick={() => setIsTaskDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Task
@@ -357,93 +362,123 @@ export default function CalendarPage() {
       </div>
 
       {errors.length > 0 && (
-        <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-          <AlertCircle className="h-4 w-4" />
+        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          <AlertCircle className="h-4 w-4 shrink-0" />
           {errors[0].message}
         </div>
       )}
 
       <Card className="overflow-hidden">
-        <CardHeader className="border-b py-4">
+        <CardHeader className="border-b bg-muted/30 py-4">
           <CardTitle className="flex items-center gap-2 text-base">
-            <CalendarDays className="h-4 w-4" />
+            <CalendarDays className="h-4 w-4 text-primary" />
             Lịch theo giờ
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="grid min-w-[760px] grid-cols-[64px_repeat(7,minmax(96px,1fr))] overflow-x-auto">
-            <div className="border-b bg-muted/40 p-2" />
-            {range.days.map((day) => (
-              <div key={day.toISOString()} className="border-b border-l bg-muted/40 p-2 text-center">
-                <div className="text-sm font-medium">{formatDay(day)}</div>
-                {isSameDay(day, new Date()) && <div className="text-xs text-primary">Hôm nay</div>}
-              </div>
-            ))}
+            <div className="border-b bg-muted/30 p-2" />
+            {range.days.map((day) => {
+              const isToday = isSameDay(day, new Date())
+              return (
+                <div
+                  key={day.toISOString()}
+                  className={`relative flex flex-col items-center gap-1 border-b border-l p-2.5 text-center transition-colors ${
+                    isToday ? "bg-primary/10" : "bg-muted/30"
+                  }`}
+                >
+                  <span className={`text-xs font-medium uppercase tracking-wide ${isToday ? "text-primary" : "text-muted-foreground"}`}>
+                    {DAY_LABELS[day.getDay()]}
+                  </span>
+                  <span
+                    className={`flex size-7 items-center justify-center rounded-full text-sm font-semibold transition-colors ${
+                      isToday ? "bg-primary text-primary-foreground shadow-sm" : "text-foreground"
+                    }`}
+                  >
+                    {day.getDate()}
+                  </span>
+                </div>
+              )
+            })}
 
             {HOURS.map((hour) => (
               <div key={hour} className="contents">
-                <div className="min-h-[76px] border-b bg-muted/20 px-2 py-2 text-xs text-muted-foreground">
+                <div className="min-h-[76px] border-b bg-muted/20 px-2 py-2 text-xs font-medium text-muted-foreground">
                   {hour.toString().padStart(2, "0")}:00
                 </div>
                 {range.days.map((day) => {
                   const items = scheduledItems.filter((item) => isSameDay(item.start, day) && item.start.getHours() === hour)
+                  const isToday = isSameDay(day, new Date())
 
                   return (
-                    <div key={`${day.toISOString()}-${hour}`} className="min-h-[76px] space-y-1 border-b border-l p-1.5">
-                      {items.map((item) => (
-                        <div
-                          key={item.id}
-                          className="rounded-md border bg-background px-2 py-1.5 text-xs shadow-xs"
-                          style={{ borderLeft: `4px solid ${item.color}` }}
-                        >
-                          <div className="line-clamp-2 font-medium">{item.title}</div>
-                          <div className="mt-1 flex items-center gap-1 text-muted-foreground">
-                            <Clock className="h-3 w-3" />
-                            {formatTime(item.start)} - {formatTime(item.end)}
+                    <div
+                      key={`${day.toISOString()}-${hour}`}
+                      className={`group/cell min-h-[76px] space-y-1 border-b border-l p-1.5 transition-colors ${
+                        isToday ? "bg-primary/[0.03]" : "bg-background hover:bg-accent/30"
+                      }`}
+                    >
+                      {items.map((item) => {
+                        const TypeIcon = typeMeta[item.type].icon
+                        return (
+                          <div
+                            key={item.id}
+                            className="group/item cursor-default rounded-lg border border-transparent bg-clip-padding px-2 py-1.5 text-xs shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                            style={{ borderLeft: `3px solid ${item.color}`, backgroundColor: `${item.color}14` }}
+                          >
+                            <div className="flex items-start gap-1.5">
+                              <TypeIcon className="mt-0.5 size-3 shrink-0" style={{ color: item.color }} />
+                              <div className="line-clamp-2 flex-1 font-medium leading-snug" style={{ color: item.color }}>
+                                {item.title}
+                              </div>
+                            </div>
+                            <div className="mt-1 flex items-center gap-1 pl-4 text-[11px] text-muted-foreground">
+                              <Clock className="size-3" />
+                              {formatTime(item.start)} - {formatTime(item.end)}
+                            </div>
+                            {item.type === "task" && item.sourceId && (
+                              <div className="mt-1.5 flex gap-1 pl-4 opacity-0 transition-opacity duration-200 group-hover/item:opacity-100">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="icon"
+                                  className="size-6"
+                                  onClick={() => completeTask(item.sourceId!)}
+                                  aria-label="Hoàn thành công việc"
+                                  title="Hoàn thành công việc"
+                                >
+                                  <Check className="size-3" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-6"
+                                  onClick={() => setSelectedTaskId(item.sourceId!)}
+                                  aria-label="Chỉnh sửa công việc"
+                                  title="Chỉnh sửa công việc"
+                                >
+                                  <Edit2 className="size-3" />
+                                </Button>
+                              </div>
+                            )}
+                            {item.type === "event" && item.sourceId && (
+                              <div className="mt-1.5 flex gap-1 pl-4 opacity-0 transition-opacity duration-200 group-hover/item:opacity-100">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-6"
+                                  onClick={() => setSelectedEventId(item.sourceId!)}
+                                  aria-label="Chỉnh sửa sự kiện"
+                                  title="Chỉnh sửa sự kiện"
+                                >
+                                  <Edit2 className="size-3" />
+                                </Button>
+                              </div>
+                            )}
                           </div>
-                          {item.type === "task" && item.sourceId && (
-                            <div className="mt-2 flex gap-1">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="icon"
-                                className="h-7 w-7"
-                                onClick={() => completeTask(item.sourceId!)}
-                                aria-label="Hoàn thành công việc"
-                                title="Hoàn thành công việc"
-                              >
-                                <Check className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
-                                onClick={() => setSelectedTaskId(item.sourceId!)}
-                                aria-label="Chỉnh sửa công việc"
-                                title="Chỉnh sửa công việc"
-                              >
-                                <Edit2 className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          )}
-                          {item.type === "event" && item.sourceId && (
-                            <div className="mt-2 flex gap-1">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
-                                onClick={() => setSelectedEventId(item.sourceId!)}
-                                aria-label="Chỉnh sửa sự kiện"
-                                title="Chỉnh sửa sự kiện"
-                              >
-                                <Edit2 className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   )
                 })}

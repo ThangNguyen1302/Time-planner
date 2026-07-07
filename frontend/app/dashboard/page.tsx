@@ -2,7 +2,7 @@
 
 import { useMemo } from "react"
 import useSWR from "swr"
-import { CalendarDays, CheckSquare, Clock, ListTodo } from "lucide-react"
+import { CalendarDays, CheckSquare, Clock, ListTodo, TrendingUp, AlertCircle, Calendar } from "lucide-react"
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -69,6 +69,14 @@ const statusColors: Record<string, string> = {
   overdue: "#dc2626",
 }
 
+const statusLabels: Record<string, string> = {
+  pending: "Chờ",
+  in_progress: "Đang làm",
+  completed: "Hoàn thành",
+  skipped: "Bỏ qua",
+  overdue: "Quá hạn",
+}
+
 const priorityColors: Record<string, string> = {
   P1: "#64748b",
   P2: "#2563eb",
@@ -130,10 +138,42 @@ export default function DashboardPage() {
   )
   const weekItems = mapWeekItems(blockItems, eventItems, existingSourceIds, range.start, range.end)
 
+  const completedTasks = taskItems.filter((t) => t.status === "completed").length
+  const completionRate = taskItems.length > 0 ? Math.round((completedTasks / taskItems.length) * 100) : 0
+
   const stats = [
-    { label: "Tasks", value: taskItems.length },
-    { label: "Events", value: eventItems.length },
-    { label: "Task chưa xếp", value: unscheduledTasks.length },
+    {
+      label: "Tổng tasks",
+      value: taskItems.length,
+      icon: ListTodo,
+      hint: `${completedTasks} đã hoàn thành`,
+      accent: "from-blue-500/15 to-blue-500/5 text-blue-600 dark:text-blue-400",
+      iconBg: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+    },
+    {
+      label: "Sự kiện",
+      value: eventItems.length,
+      icon: Calendar,
+      hint: "Tổng sự kiện đã tạo",
+      accent: "from-violet-500/15 to-violet-500/5 text-violet-600 dark:text-violet-400",
+      iconBg: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
+    },
+    {
+      label: "Task chưa xếp",
+      value: unscheduledTasks.length,
+      icon: AlertCircle,
+      hint: "Cần sắp xếp lịch",
+      accent: "from-amber-500/15 to-amber-500/5 text-amber-600 dark:text-amber-400",
+      iconBg: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    },
+    {
+      label: "Tỷ lệ hoàn thành",
+      value: `${completionRate}%`,
+      icon: TrendingUp,
+      hint: "Tasks hoàn thành / tổng",
+      accent: "from-emerald-500/15 to-emerald-500/5 text-emerald-600 dark:text-emerald-400",
+      iconBg: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    },
   ]
   const statusData = Object.entries(
     taskItems.reduce<Record<string, number>>((acc, task) => {
@@ -155,23 +195,30 @@ export default function DashboardPage() {
   })
 
   return (
-    <div className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-3">
+    <div className="space-y-6">
+      {/* Stat cards */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.label}>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium">{stat.label}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-semibold">{stat.value}</p>
+          <Card key={stat.label} className="relative overflow-hidden">
+            <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${stat.accent} opacity-60`} />
+            <CardContent className="relative flex items-start justify-between p-5">
+              <div className="space-y-1.5">
+                <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
+                <p className="text-3xl font-bold tracking-tight">{stat.value}</p>
+                <p className="text-xs text-muted-foreground">{stat.hint}</p>
+              </div>
+              <div className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${stat.iconBg}`}>
+                <stat.icon className="size-5" />
+              </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
+      {/* Charts */}
       <div className="grid gap-4 xl:grid-cols-3">
         <Card>
-          <CardHeader className="py-4">
+          <CardHeader className="py-5">
             <CardTitle className="text-base">Trạng thái task</CardTitle>
           </CardHeader>
           <CardContent className="h-64">
@@ -182,24 +229,24 @@ export default function DashboardPage() {
                     <Cell key={entry.name} fill={statusColors[entry.name] || "#2563eb"} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip formatter={(value: number, name: string) => [value, statusLabels[name] || name]} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="py-4">
+          <CardHeader className="py-5">
             <CardTitle className="text-base">Priority task</CardTitle>
           </CardHeader>
           <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={priorityData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" />
-                <YAxis allowDecimals={false} width={28} />
-                <Tooltip />
-                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+                <XAxis dataKey="name" tickLine={false} axisLine={false} fontSize={12} />
+                <YAxis allowDecimals={false} width={28} tickLine={false} axisLine={false} fontSize={12} />
+                <Tooltip cursor={{ fill: "var(--color-muted)" }} />
+                <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                   {priorityData.map((entry) => (
                     <Cell key={entry.name} fill={priorityColors[entry.name]} />
                   ))}
@@ -210,67 +257,94 @@ export default function DashboardPage() {
         </Card>
 
         <Card>
-          <CardHeader className="py-4">
+          <CardHeader className="py-5">
             <CardTitle className="text-base">Lịch trong tuần</CardTitle>
           </CardHeader>
           <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={eventByDayData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" />
-                <YAxis allowDecimals={false} width={28} />
-                <Tooltip />
-                <Bar dataKey="value" fill="#7c3aed" radius={[4, 4, 0, 0]} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+                <XAxis dataKey="name" tickLine={false} axisLine={false} fontSize={12} />
+                <YAxis allowDecimals={false} width={28} tickLine={false} axisLine={false} fontSize={12} />
+                <Tooltip cursor={{ fill: "var(--color-muted)" }} />
+                <Bar dataKey="value" fill="#7c3aed" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
 
+      {/* Lists */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
-          <CardHeader className="py-4">
+          <CardHeader className="py-5">
             <CardTitle className="flex items-center gap-2 text-base">
-              <ListTodo className="h-4 w-4" />
+              <ListTodo className="size-4 text-primary" />
               Task chưa xếp lịch
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            {unscheduledTasks.length === 0 && <p className="text-sm text-muted-foreground">Không có task đang chờ.</p>}
-            {unscheduledTasks.map((task) => (
-              <div key={task.id} className="rounded-md border p-3">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="min-w-0 font-medium">{task.title}</p>
-                  <Badge variant="outline">{priorityLabel(task.priority)}</Badge>
+          <CardContent className="space-y-2.5">
+            {unscheduledTasks.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-10 text-center">
+                <div className="flex size-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 mb-3">
+                  <CheckSquare className="size-5" />
                 </div>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {task.duration} phút{task.deadline ? ` - hạn ${new Date(task.deadline).toLocaleString("vi-VN")}` : ""}
-                </p>
+                <p className="text-sm text-muted-foreground">Tất cả task đã được xếp lịch</p>
+              </div>
+            )}
+            {unscheduledTasks.map((task) => (
+              <div
+                key={task.id}
+                className="group flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-card p-3 transition-colors hover:border-border hover:bg-accent/30"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-sm">{task.title}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {task.duration} phút
+                    {task.deadline ? ` - hạn ${new Date(task.deadline).toLocaleString("vi-VN")}` : ""}
+                  </p>
+                </div>
+                <Badge variant="secondary" className="shrink-0">{priorityLabel(task.priority)}</Badge>
               </div>
             ))}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="py-4">
+          <CardHeader className="py-5">
             <CardTitle className="flex items-center gap-2 text-base">
-              <CheckSquare className="h-4 w-4" />
+              <CheckSquare className="size-4 text-primary" />
               Sự kiện trong tuần
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-2.5">
             {weekItems.length === 0 && (
-              <p className="text-sm text-muted-foreground">Chưa có block hay event nào trong tuần này.</p>
+              <div className="flex flex-col items-center justify-center py-10 text-center">
+                <div className="flex size-12 items-center justify-center rounded-full bg-violet-500/10 text-violet-600 mb-3">
+                  <CalendarDays className="size-5" />
+                </div>
+                <p className="text-sm text-muted-foreground">Chưa có block hay event nào trong tuần này</p>
+              </div>
             )}
             {weekItems.slice(0, 8).map((item) => (
-              <div key={item.id} className="rounded-md border p-3" style={{ borderLeft: `4px solid ${item.color}` }}>
-                <p className="font-medium">{item.title}</p>
-                <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
-                  <CalendarDays className="h-3.5 w-3.5" />
-                  {item.start.toLocaleDateString("vi-VN")}
-                  <Clock className="ml-2 h-3.5 w-3.5" />
-                  {formatTime(item.start)} - {formatTime(item.end)}
-                </p>
+              <div
+                key={item.id}
+                className="group flex items-center gap-3 rounded-lg border border-border/60 bg-card p-3 transition-colors hover:border-border hover:bg-accent/30"
+                style={{ borderLeft: `3px solid ${item.color}` }}
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-sm">{item.title}</p>
+                  <p className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <CalendarDays className="size-3" />
+                      {item.start.toLocaleDateString("vi-VN")}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="size-3" />
+                      {formatTime(item.start)} - {formatTime(item.end)}
+                    </span>
+                  </p>
+                </div>
               </div>
             ))}
           </CardContent>

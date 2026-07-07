@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useSWRConfig } from "swr"
-import { MessageCircle, X, Send, Loader2, Bot, User, Sparkles } from "lucide-react"
+import { MessageCircle, X, Bot, User, Sparkles, Trash2, ArrowUp, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -12,6 +12,61 @@ import type { Message, Avatar } from "@/lib/types"
 
 interface ChatWidgetProps {
   avatar?: Avatar
+}
+
+const moodAccent: Record<string, { bar: string; tint: string }> = {
+  happy: { bar: "before:bg-emerald-500", tint: "dark:bg-emerald-500/5" },
+  serious: { bar: "before:bg-orange-500", tint: "dark:bg-orange-500/5" },
+  encouraging: { bar: "before:bg-blue-500", tint: "dark:bg-blue-500/5" },
+  warning: { bar: "before:bg-rose-500", tint: "dark:bg-rose-500/5" },
+  sad: { bar: "before:bg-sky-500", tint: "dark:bg-sky-500/5" },
+  surprised: { bar: "before:bg-violet-500", tint: "dark:bg-violet-500/5" },
+  neutral: { bar: "before:bg-primary", tint: "" },
+}
+
+function MessageContent({ content }: { content: string }) {
+  const parts = content.split(/(```[\s\S]*?```)/g)
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (part.startsWith("```")) {
+          const body = part.slice(3, -3)
+          const nl = body.indexOf("\n")
+          const lang = nl >= 0 ? body.slice(0, nl).trim() : ""
+          const code = nl >= 0 ? body.slice(nl + 1) : body
+          return (
+            <div className="chat-code-block" key={i}>
+              <div className="chat-code-block__header">
+                <span>{lang || "code"}</span>
+                <button
+                  type="button"
+                  onClick={() => navigator.clipboard?.writeText(code).catch(() => {})}
+                  className="text-[0.65rem] uppercase tracking-wide opacity-70 hover:opacity-100 transition-opacity"
+                >
+                  Copy
+                </button>
+              </div>
+              <pre className="chat-code-block__pre">
+                <code>{code}</code>
+              </pre>
+            </div>
+          )
+        }
+        const inline = part.split(/(`[^`]+`)/g)
+        return (
+          <span key={i}>
+            {inline.map((seg, j) =>
+              seg.startsWith("`") && seg.endsWith("`") ? (
+                <code key={j} className="chat-code-inline">{seg.slice(1, -1)}</code>
+              ) : (
+                <span key={j}>{seg}</span>
+              )
+            )}
+          </span>
+        )
+      })}
+    </>
+  )
 }
 
 export function ChatWidget({ avatar }: ChatWidgetProps) {
@@ -93,172 +148,270 @@ export function ChatWidget({ avatar }: ChatWidgetProps) {
     sendMessage(reply)
   }
 
-  const getMoodColor = (mood?: string) => {
-    switch (mood) {
-      case "happy":
-        return "bg-green-100 border-green-300"
-      case "serious":
-        return "bg-orange-100 border-orange-300"
-      case "encouraging":
-        return "bg-blue-100 border-blue-300"
-      case "warning":
-        return "bg-red-100 border-red-300"
-      default:
-        return "bg-muted border-border"
-    }
-  }
+  const suggestions = [
+    { label: "Lịch hôm nay?", hint: "Xem sự kiện & task" },
+    { label: "Tạo task mới", hint: "Thêm công việc" },
+    { label: "Thống kê tuần", hint: "Tổng hợp tiến độ" },
+  ]
 
   return (
     <>
       {/* Floating button */}
-      <Button
+      <button
         onClick={() => setIsOpen(true)}
         className={cn(
-          "fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-lg z-50",
-          "bg-primary hover:bg-primary/90",
-          isOpen && "hidden",
+          "fixed bottom-6 right-6 z-50 grid place-items-center",
+          "w-14 h-14 rounded-full text-primary-foreground",
+          "bg-primary hover:bg-primary/95 transition-all duration-300",
+          "hover:scale-105 active:scale-95",
+          "animate-chat-fab",
+          isOpen && "pointer-events-none opacity-0 scale-90",
         )}
-        size="icon"
+        aria-label="Mở trợ lý AI"
       >
         <MessageCircle className="w-6 h-6" />
-      </Button>
+        <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 ring-2 ring-background" />
+      </button>
 
       {/* Chat panel */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 w-96 h-128 bg-background border border-border rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden">
+        <div
+          className={cn(
+            "fixed bottom-6 right-6 z-50 flex flex-col overflow-hidden",
+            "bg-background/95 backdrop-blur-xl",
+            "border border-border/70 rounded-[1.25rem] shadow-2xl shadow-black/10",
+            "animate-chat-panel-in transition-all duration-300",
+            "w-[380px] h-[600px]",
+            "max-[440px]:left-3 max-[440px]:right-3 max-[440px]:w-auto max-[440px]:bottom-3 max-[440px]:top-3 max-[440px]:h-auto",
+          )}
+        >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+          <div className="relative flex items-center justify-between px-4 py-3 border-b border-border/60 bg-gradient-to-r from-primary/[0.04] to-transparent">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="relative w-9 h-9 rounded-full bg-primary/10 ring-1 ring-primary/15 flex items-center justify-center overflow-hidden shrink-0">
                 {avatar?.avatar_url ? (
                   <img
                     src={avatar.avatar_url || "/placeholder.svg"}
                     alt={avatar.name}
-                    className="w-10 h-10 rounded-full object-cover"
+                    className="w-9 h-9 rounded-full object-cover"
                   />
                 ) : (
                   <Bot className="w-5 h-5 text-primary" />
                 )}
+                <span className={cn(
+                  "absolute -bottom-0 -right-0 w-2.5 h-2.5 rounded-full ring-2 ring-background",
+                  isLoading ? "bg-amber-400" : "bg-emerald-400"
+                )} />
               </div>
-              <div>
-                <p className="font-medium text-sm">{avatar?.name || "Trợ lý"}</p>
-                <p className="text-xs text-muted-foreground">Sẵn sàng hỗ trợ</p>
+              <div className="min-w-0">
+                <p className="font-semibold text-[0.825rem] leading-tight truncate">
+                  {avatar?.name || "Trợ lý"}
+                </p>
+                <p className="text-[0.7rem] text-muted-foreground truncate flex items-center gap-1">
+                  {isLoading ? (
+                    <>
+                      <span className="chat-typing-dot !w-1 !h-1 text-amber-500" />
+                      <span className="chat-typing-dot !w-1 !h-1 text-amber-500" />
+                      <span className="chat-typing-dot !w-1 !h-1 text-amber-500" />
+                      <span className="ml-1">Đang suy nghĩ</span>
+                    </>
+                  ) : (
+                    <span className="inline-flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      Sẵn sàng hỗ trợ
+                    </span>
+                  )}
+                </p>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
-              <X className="w-5 h-5" />
-            </Button>
+            <div className="flex items-center gap-0.5 shrink-0">
+              {messages.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setMessages([])
+                    setConversationId(null)
+                  }}
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  title="Xóa lịch sử chat"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsOpen(false)}
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                title="Đóng"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
 
           {/* Messages */}
           <div ref={scrollRootRef} className="flex-1 min-h-0">
-            <ScrollArea className="h-full p-4">
-            {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
-                <Sparkles className="w-12 h-12 mb-4 text-primary/30" />
-                <p className="text-sm font-medium">Xin chào!</p>
-                <p className="text-xs mt-1">Tôi có thể giúp bạn quản lý lịch trình, tạo task, và nhiều hơn nữa.</p>
-                <div className="flex flex-wrap gap-2 mt-4">
-                  {["Lịch hôm nay?", "Tạo task mới", "Thống kê tuần"].map((suggestion) => (
-                    <Button
-                      key={suggestion}
-                      variant="outline"
-                      size="sm"
-                      className="text-xs bg-transparent"
-                      onClick={() => sendMessage(suggestion)}
-                    >
-                      {suggestion}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {messages.map((msg) => (
-                  <div key={msg.id} className={cn("flex gap-2", msg.role === "user" ? "justify-end" : "justify-start")}>
-                    {msg.role === "assistant" && (
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                        <Bot className="w-4 h-4 text-primary" />
+            <ScrollArea className="h-full">
+              <div className="px-4 py-4">
+                {messages.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center text-center py-10 animate-chat-msg-in">
+                    <div className="relative mb-5">
+                      <div className="absolute inset-0 blur-2xl bg-primary/20 rounded-full" />
+                      <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20">
+                        <Sparkles className="w-8 h-8 text-primary-foreground" />
                       </div>
-                    )}
-                    <div
-                      className={cn(
-                        "max-w-[80%] rounded-2xl px-4 py-2 text-sm",
-                        msg.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : cn("border", getMoodColor(msg.mood)),
-                      )}
-                    >
-                      <p className="whitespace-pre-wrap wrap-break-word">{msg.content}</p>
-
-                      {/* Quick replies */}
-                      {msg.role === "assistant" && msg.quick_replies && msg.quick_replies.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {msg.quick_replies.map((reply, i) => (
-                            <Button
-                              key={i}
-                              variant="ghost"
-                              size="sm"
-                              className="h-auto py-1 px-2 text-xs bg-background/50 hover:bg-background"
-                              onClick={() => handleQuickReply(reply)}
-                            >
-                              {reply}
-                            </Button>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Actions taken indicator */}
-                      {msg.role === "assistant" && msg.actions && msg.actions.length > 0 && (
-                        <div className="mt-2 pt-2 border-t border-border/50">
-                          <p className="text-xs text-muted-foreground">
-                            Đã thực hiện: {msg.actions.map((a) => a.type).join(", ")}
-                          </p>
-                        </div>
-                      )}
                     </div>
-                    {msg.role === "user" && (
-                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                        <User className="w-4 h-4" />
-                      </div>
-                    )}
+                    <p className="text-base font-semibold tracking-tight">Xin chào! 👋</p>
+                    <p className="text-[0.8rem] mt-1.5 text-muted-foreground max-w-[16rem] leading-relaxed">
+                      Tôi có thể giúp bạn quản lý lịch trình, tạo task, và nhiều hơn nữa.
+                    </p>
+                    <div className="grid gap-2 mt-6 w-full max-w-[17rem]">
+                      {suggestions.map((s) => (
+                        <button
+                          key={s.label}
+                          onClick={() => sendMessage(s.label)}
+                          className="group text-left rounded-xl border border-border/70 bg-card hover:bg-accent/60 hover:border-primary/30 px-3.5 py-2.5 transition-all duration-200 hover:shadow-sm"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="text-[0.8rem] font-medium truncate">{s.label}</p>
+                              <p className="text-[0.7rem] text-muted-foreground truncate">{s.hint}</p>
+                            </div>
+                            <ArrowUp className="w-3.5 h-3.5 text-muted-foreground rotate-45 group-hover:text-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                ))}
-                {isLoading && (
-                  <div className="flex gap-2">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Bot className="w-4 h-4 text-primary" />
-                    </div>
-                    <div className="bg-muted rounded-2xl px-4 py-2">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    </div>
+                ) : (
+                  <div className="space-y-5">
+                    {messages.map((msg) => {
+                      const isUser = msg.role === "user"
+                      const accent = moodAccent[msg.mood || "neutral"] || moodAccent.neutral
+                      return (
+                        <div
+                          key={msg.id}
+                          className={cn(
+                            "flex gap-2.5 animate-chat-msg-in",
+                            isUser ? "justify-end" : "justify-start"
+                          )}
+                        >
+                          {!isUser && (
+                            <div className="w-8 h-8 rounded-full bg-primary/10 ring-1 ring-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                              <Bot className="w-4 h-4 text-primary" />
+                            </div>
+                          )}
+                          <div className={cn("flex flex-col gap-1.5 max-w-[82%]", isUser && "items-end")}>
+                            <div
+                              className={cn(
+                                "rounded-2xl px-3.5 py-2.5 text-[0.825rem] leading-relaxed shadow-sm",
+                                isUser
+                                  ? "bg-primary text-primary-foreground rounded-br-md"
+                                  : cn(
+                                      "bg-card border border-border/70 rounded-bl-md relative before:absolute before:left-0 before:top-3 before:bottom-3 before:w-[3px] before:rounded-full",
+                                      accent.bar, accent.tint
+                                    )
+                              )}
+                            >
+                              <div className="whitespace-pre-wrap break-words">
+                                <MessageContent content={msg.content} />
+                              </div>
+
+                              {msg.role === "assistant" && msg.quick_replies && msg.quick_replies.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5 mt-2.5 pt-2 border-t border-border/50">
+                                  {msg.quick_replies.map((reply, i) => (
+                                    <button
+                                      key={i}
+                                      onClick={() => handleQuickReply(reply)}
+                                      className="text-[0.72rem] font-medium px-2.5 py-1 rounded-full border border-border/70 bg-background/60 hover:bg-accent hover:border-primary/30 text-foreground/80 hover:text-foreground transition-all"
+                                    >
+                                      {reply}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+
+                              {msg.role === "assistant" && msg.actions && msg.actions.length > 0 && (
+                                <div className="mt-2.5 pt-2 border-t border-border/50 flex items-start gap-1.5">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                                  <p className="text-[0.7rem] text-muted-foreground">
+                                    Đã thực hiện: {msg.actions.map((a) => a.type).join(", ")}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          {isUser && (
+                            <div className="w-8 h-8 rounded-full bg-muted ring-1 ring-border/50 flex items-center justify-center shrink-0 mt-0.5">
+                              <User className="w-4 h-4 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                    {isLoading && (
+                      <div className="flex gap-2.5 animate-chat-msg-in">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 ring-1 ring-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <Bot className="w-4 h-4 text-primary" />
+                        </div>
+                        <div className="bg-card border border-border/70 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <span className="chat-typing-dot" />
+                            <span className="chat-typing-dot" />
+                            <span className="chat-typing-dot" />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
             </ScrollArea>
           </div>
 
           {/* Input */}
-          <div className="p-4 border-t border-border">
+          <div className="px-3 py-3 border-t border-border/60 bg-background/80 backdrop-blur">
             <form
               onSubmit={(e) => {
                 e.preventDefault()
                 sendMessage(input)
               }}
-              className="flex gap-2"
+              className="flex items-end gap-2"
             >
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Nhập tin nhắn..."
-                className="flex-1"
-                disabled={isLoading}
-              />
-              <Button type="submit" size="icon" disabled={!input.trim() || isLoading}>
-                <Send className="w-4 h-4" />
+              <div className="flex-1 relative">
+                <Input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Nhập tin nhắn cho trợ lý..."
+                  className={cn(
+                    "flex-1 h-11 rounded-xl text-[0.85rem]",
+                    "bg-muted/40 border-border/60",
+                    "focus-visible:bg-background focus-visible:border-primary/40 focus-visible:ring-primary/20",
+                    "transition-colors"
+                  )}
+                  disabled={isLoading}
+                />
+              </div>
+              <Button
+                type="submit"
+                size="icon"
+                disabled={!input.trim() || isLoading}
+                className={cn(
+                  "h-11 w-11 rounded-xl shrink-0",
+                  "bg-primary hover:bg-primary/90",
+                  "disabled:opacity-40 disabled:cursor-not-allowed",
+                  "transition-all duration-200 hover:scale-105 active:scale-95",
+                  input.trim() && !isLoading && "shadow-md shadow-primary/25"
+                )}
+              >
+                <ArrowUp className="w-4 h-4" />
               </Button>
             </form>
+            <p className="text-[0.65rem] text-muted-foreground/70 text-center mt-1.5">
+              Trợ lý AI · có thể mắc lỗi. Kiểm tra thông tin quan trọng.
+            </p>
           </div>
         </div>
       )}
