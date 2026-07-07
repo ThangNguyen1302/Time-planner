@@ -129,7 +129,7 @@ export function ChatWidgetLive2D({ avatar }: ChatWidgetProps) {
     }
   )
 
-  const sendMessageRef = useRef<(content: string) => Promise<void>>()
+  const sendMessageRef = useRef<((content: string) => Promise<void>) | null>(null)
 
   useEffect(() => {
     if (pendingVoiceText && sendMessageRef.current) {

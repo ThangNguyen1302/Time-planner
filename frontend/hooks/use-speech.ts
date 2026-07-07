@@ -40,7 +40,7 @@ export function useSpeech(onResult: (text: string) => void, onInterimResult?: (t
   useEffect(() => {
     // Initialize Web Speech API
     if (typeof window !== "undefined") {
-      const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
       if (SpeechRecognition) {
         const recognition = new SpeechRecognition()
         recognition.continuous = false   // Let it end naturally; we restart manually
