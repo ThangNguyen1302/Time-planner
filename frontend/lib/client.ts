@@ -112,3 +112,50 @@ export function unwrapData<T>(payload: T | { data: T }) {
   }
   return payload as T
 }
+
+export async function transcribeAudio(blob: Blob, language = "vi") {
+  const token = getAccessToken()
+  const formData = new FormData()
+  formData.append("file", blob, "recording.webm")
+  formData.append("language", language)
+
+  const res = await fetch(buildUrl("/api/v1/assistant/voice/transcribe"), {
+    method: "POST",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: formData,
+  })
+
+  if (!res.ok) {
+    throw new Error(await parseError(res))
+  }
+
+  return await res.json()
+}
+
+export async function voiceChat(blob: Blob, conversationId?: string, language = "vi") {
+  const token = getAccessToken()
+  const formData = new FormData()
+  formData.append("file", blob, "recording.webm")
+  formData.append("language", language)
+  if (conversationId) formData.append("conversationId", conversationId)
+
+  const res = await fetch(buildUrl("/api/v1/assistant/voice/chat"), {
+    method: "POST",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: formData,
+  })
+
+  if (!res.ok) {
+    throw new Error(await parseError(res))
+  }
+
+  return await res.json()
+}
+
+export async function undoAssistantAction(actionId: string) {
+  return backendRequest(`/api/v1/assistant/actions/${actionId}/undo`, { method: "POST" })
+}

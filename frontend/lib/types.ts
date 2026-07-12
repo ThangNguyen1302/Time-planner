@@ -145,6 +145,9 @@ export interface AssistantAction {
   type: string
   data: Record<string, unknown>
   result?: Record<string, unknown>
+  logId?: string
+  canUndo?: boolean
+  undoneAt?: string
 }
 
 export interface AssistantActionLog {
@@ -188,4 +191,21 @@ export interface AssistantTool {
   name: string
   description: string
   parameters: Record<string, unknown>
+}
+
+export interface VoiceTranscribeResponse {
+  text: string
+  confidence: number
+  language: string
+  engine: string
+}
+
+export interface VoiceChatResponse {
+  transcription: VoiceTranscribeResponse
+  chatResponse: {
+    message: Message
+    actions?: AssistantAction[]
+    quickReplies?: string[]
+    conversationId?: string
+  }
 }

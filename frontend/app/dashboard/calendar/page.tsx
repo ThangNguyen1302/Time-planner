@@ -17,7 +17,7 @@ import { extractItems, fromDateInputValue, toDateInputValue } from "@/lib/api-re
 import type { Event, Task, TimeBlock } from "@/lib/types"
 
 const fetcher = (path: string) => backendRequest<unknown>(path)
-const HOURS = Array.from({ length: 15 }, (_, index) => index + 7)
+const HOURS = Array.from({ length: 24 }, (_, index) => index)
 const DAY_LABELS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"]
 
 type ApiDateItem = {

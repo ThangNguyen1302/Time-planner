@@ -2,15 +2,17 @@
 
 import { useState, useRef, useEffect, useCallback } from "react"
 import { useSWRConfig } from "swr"
+import { toast } from "sonner"
 import { MessageCircle, X, Send, Loader2, Bot, User, Sparkles, Maximize2, Minimize2, Mic, MicOff, Square, Trash2, ArrowUp, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { Live2DAvatar, type Live2DExpression } from "@/components/live2d"
-import { backendRequest } from "@/lib/client"
-import type { Message, Avatar } from "@/lib/types"
+import { backendRequest, undoAssistantAction } from "@/lib/client"
+import type { Message, Avatar, AssistantAction } from "@/lib/types"
 import { useSpeech } from "@/hooks/use-speech"
+import { TaskCardList, EventCardList, type TaskCardData, type EventCardData } from "@/components/assistant-query-cards"
 
 interface ChatWidgetProps {
   avatar?: Avatar
@@ -43,7 +45,27 @@ const moodAccent: Record<string, { bar: string; tint: string }> = {
   warning: { bar: "before:bg-rose-500", tint: "dark:bg-rose-500/5" },
   sad: { bar: "before:bg-sky-500", tint: "dark:bg-sky-500/5" },
   surprised: { bar: "before:bg-violet-500", tint: "dark:bg-violet-500/5" },
+  thinking: { bar: "before:bg-amber-500", tint: "dark:bg-amber-500/5" },
+  shy: { bar: "before:bg-pink-500", tint: "dark:bg-pink-500/5" },
   neutral: { bar: "before:bg-primary", tint: "" },
+}
+
+function formatActionLabel(action: AssistantAction): string {
+  const typeMap: Record<string, string> = {
+    create_task: "Tạo công việc",
+    update_task: "Cập nhật công việc",
+    delete_task: "Xóa công việc",
+    create_event: "Tạo sự kiện",
+    update_event: "Cập nhật sự kiện",
+    delete_event: "Xóa sự kiện",
+    query_task: "Tìm kiếm công việc",
+    query_event: "Tìm kiếm sự kiện",
+    query_schedule: "Danh sách lịch trình",
+    query_stats: "Thống kê tiến độ",
+  }
+  const label = typeMap[action.type] || action.type
+  const title = (action.result?.title || action.data?.title || action.data?.keyword) as string | undefined
+  return title ? `${label}: "${title}"` : label
 }
 
 /**
@@ -119,7 +141,7 @@ export function ChatWidgetLive2D({ avatar }: ChatWidgetProps) {
 
   const [pendingVoiceText, setPendingVoiceText] = useState("")
 
-  const { isListening, isSpeaking, hasSupport, startListening, stopListening, speak, stopSpeaking } = useSpeech(
+  const { isListening, isSpeaking, hasSupport, volume, startListening, stopListening, speak, stopSpeaking } = useSpeech(
     (text) => {
       setInput(text)
       setPendingVoiceText(text)
@@ -155,6 +177,54 @@ export function ChatWidgetLive2D({ avatar }: ChatWidgetProps) {
     scrollToBottom()
   }, [messages, scrollToBottom])
 
+  useEffect(() => {
+    if (!isOpen) return
+    const storedConvId = localStorage.getItem("timeplanner_assistant_conversation_id")
+    if (storedConvId && !conversationId && messages.length === 0) {
+      setConversationId(storedConvId)
+      setIsLoading(true)
+      backendRequest<Message[]>(`/api/v1/assistant/conversations/${storedConvId}/messages`)
+        .then((data) => {
+          if (Array.isArray(data) && data.length > 0) {
+            setMessages(data)
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to load history:", err)
+          localStorage.removeItem("timeplanner_assistant_conversation_id")
+          setConversationId(null)
+        })
+        .finally(() => setIsLoading(false))
+    }
+  }, [isOpen])
+
+  const handleUndoAction = async (logId: string, messageId: string, actionIndex: number) => {
+    try {
+      await undoAssistantAction(logId)
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.id !== messageId) return m
+          const updatedActions = [...(m.actions || [])]
+          if (updatedActions[actionIndex]) {
+            updatedActions[actionIndex] = {
+              ...updatedActions[actionIndex],
+              canUndo: false,
+              undoneAt: new Date().toISOString(),
+            }
+          }
+          return { ...m, actions: updatedActions }
+        })
+      )
+      mutate("/api/v1/tasks")
+      mutate("/api/v1/events")
+      mutate((key) => typeof key === "string" && key.startsWith("/api/v1/time-blocks"))
+      toast.success("Đã hoàn tác hành động!")
+    } catch (error: any) {
+      console.error("Undo error:", error)
+      toast.error("Không thể hoàn tác hành động. Vui lòng thử lại.")
+    }
+  }
+
   const sendMessage = async (content: string) => {
     if (!content.trim() || isLoading) return
 
@@ -163,93 +233,180 @@ export function ChatWidgetLive2D({ avatar }: ChatWidgetProps) {
       conversation_id: conversationId || "",
       user_id: "",
       role: "user",
-      content,
+      content: content.trim(),
       actions: [],
       quick_replies: [],
       is_proactive: false,
       created_at: new Date().toISOString(),
     }
 
-    setMessages((prev) => [...prev, userMessage])
+    const assistantMsgId = crypto.randomUUID()
+    const placeholderMsg: Message = {
+      id: assistantMsgId,
+      conversation_id: conversationId || "",
+      user_id: "",
+      role: "assistant",
+      content: "",
+      mood: "thinking",
+      actions: [],
+      quick_replies: [],
+      is_proactive: false,
+      created_at: new Date().toISOString(),
+    }
+
+    setMessages((prev) => [...prev, userMessage, placeholderMsg])
     setInput("")
     setIsLoading(true)
     setCurrentExpression("thinking")
     stopSpeaking()
 
     try {
-      const data = await backendRequest<{
-        conversationId?: string
-        message?: AssistantChatMessage
-        actions?: { type: string }[]
-      }>("/api/v1/assistant/chat", {
+      const token = localStorage.getItem("timeplanner_auth_token") || ""
+      const res = await fetch("http://localhost:8080/api/v1/assistant/chat/stream", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
-          message: content,
+          message: content.trim(),
           conversationId,
         }),
       })
 
-      if (data.conversationId) {
-        setConversationId(data.conversationId)
-      }
+      if (!res.ok || !res.body) {
+        const data = await backendRequest<{
+          conversationId?: string
+          message?: AssistantChatMessage
+          actions?: { type: string }[]
+        }>("/api/v1/assistant/chat", {
+          method: "POST",
+          body: JSON.stringify({
+            message: content.trim(),
+            conversationId,
+          }),
+        })
 
-      const assistantMessage = data.message
-      if (assistantMessage) {
-        setMessages((prev) => [...prev, assistantMessage])
-
-        const mood = assistantMessage.mood || "neutral"
-        setCurrentExpression(moodToExpression[mood] || "neutral")
-
-        const intensity = typeof assistantMessage.emotion_intensity === "number"
-          ? assistantMessage.emotion_intensity
-          : 0.5
-        setEmotionIntensity(intensity)
-
-        const actions = data.actions ?? []
-        if (actions.length > 0) {
-          const actionTypes = actions.map((a: { type: string }) => a.type)
-          if (actionTypes.includes("create_task") || actionTypes.includes("update_task") || actionTypes.includes("delete_task")) {
-            mutate("/api/v1/tasks")
-            mutate((key) => typeof key === "string" && key.startsWith("/api/v1/time-blocks"))
-          }
-          if (actionTypes.includes("create_event") || actionTypes.includes("update_event") || actionTypes.includes("delete_event")) {
-            mutate("/api/v1/events")
-            mutate((key) => typeof key === "string" && key.startsWith("/api/v1/time-blocks"))
-          }
-
-          if (
-            actionTypes.includes("create_task") ||
-            actionTypes.includes("create_event") ||
-            actionTypes.includes("update_task") ||
-            actionTypes.includes("update_event") ||
-            actionTypes.includes("delete_task") ||
-            actionTypes.includes("delete_event")
-          ) {
-            setTriggerMotion("Happy")
-          } else if (actionTypes.includes("mark_done")) {
-            setTriggerMotion("Happy")
-          } else if (actionTypes.includes("reschedule")) {
-            setTriggerMotion("Tap")
-          }
-        } else if (mood === "warning" || mood === "scared") {
-          setTriggerMotion("Sad")
-        } else if (mood === "surprised") {
-          setTriggerMotion("Tap")
+        if (data.conversationId) {
+          setConversationId(data.conversationId)
+          localStorage.setItem("timeplanner_assistant_conversation_id", data.conversationId)
         }
 
-        if (autoVoiceModeRef.current) {
-          speak(assistantMessage.content, () => {
-            if (autoVoiceModeRef.current) {
-              startListening(true)
+        const assistantMessage = data.message
+        if (assistantMessage) {
+          setMessages((prev) => prev.map((m) => (m.id === assistantMsgId ? assistantMessage : m)))
+
+          const mood = assistantMessage.mood || "neutral"
+          setCurrentExpression(moodToExpression[mood] || "neutral")
+
+          const intensity = typeof assistantMessage.emotion_intensity === "number"
+            ? assistantMessage.emotion_intensity
+            : 0.5
+          setEmotionIntensity(intensity)
+
+          const actions = data.actions ?? []
+          if (actions.length > 0) {
+            const actionTypes = actions.map((a: { type: string }) => a.type)
+            if (actionTypes.some((t) => t.includes("task"))) mutate("/api/v1/tasks")
+            if (actionTypes.some((t) => t.includes("event"))) mutate("/api/v1/events")
+            mutate((key) => typeof key === "string" && key.startsWith("/api/v1/time-blocks"))
+          }
+
+          if (autoVoiceModeRef.current) {
+            speak(assistantMessage.content, () => {
+              if (autoVoiceModeRef.current) {
+                startListening(true)
+              }
+            })
+          }
+        }
+        return
+      }
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ""
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split("\n")
+        buffer = lines.pop() || ""
+
+        let currentEvent = ""
+        for (const line of lines) {
+          if (line.startsWith("event: ")) {
+            currentEvent = line.slice(7).trim()
+          } else if (line.startsWith("data: ")) {
+            const dataStr = line.slice(6).trim()
+            if (!dataStr) continue
+            try {
+              const dataObj = JSON.parse(dataStr)
+              if (currentEvent === "conversation" && dataObj.conversationId) {
+                setConversationId(dataObj.conversationId)
+                localStorage.setItem("timeplanner_assistant_conversation_id", dataObj.conversationId)
+              } else if (currentEvent === "chunk" && dataObj.content !== undefined) {
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === assistantMsgId
+                      ? { ...m, content: m.content + (m.content ? " " : "") + dataObj.content }
+                      : m
+                  )
+                )
+              } else if (currentEvent === "done" && dataObj.message) {
+                const finalMessage = dataObj.message as AssistantChatMessage
+                setMessages((prev) => prev.map((m) => (m.id === assistantMsgId ? finalMessage : m)))
+
+                const mood = finalMessage.mood || "neutral"
+                setCurrentExpression(moodToExpression[mood] || "neutral")
+
+                const intensity = typeof finalMessage.emotion_intensity === "number"
+                  ? finalMessage.emotion_intensity
+                  : 0.5
+                setEmotionIntensity(intensity)
+
+                const actions = dataObj.actions ?? []
+                if (actions.length > 0) {
+                  const actionTypes = actions.map((a: AssistantAction) => a.type)
+                  if (actionTypes.some((t: string) => t.includes("task"))) mutate("/api/v1/tasks")
+                  if (actionTypes.some((t: string) => t.includes("event"))) mutate("/api/v1/events")
+                  mutate((key) => typeof key === "string" && key.startsWith("/api/v1/time-blocks"))
+
+                  if (actionTypes.some((t: string) => t.includes("create") || t.includes("update") || t.includes("delete") || t.includes("mark_done"))) {
+                    setTriggerMotion("Happy")
+                  } else if (actionTypes.includes("reschedule")) {
+                    setTriggerMotion("Tap")
+                  }
+                } else if (mood === "warning" || mood === "scared") {
+                  setTriggerMotion("Sad")
+                } else if (mood === "surprised") {
+                  setTriggerMotion("Tap")
+                }
+
+                if (autoVoiceModeRef.current) {
+                  speak(finalMessage.content, () => {
+                    if (autoVoiceModeRef.current) {
+                      startListening(true)
+                    }
+                  })
+                }
+              } else if (currentEvent === "error" && dataObj.error) {
+                toast.error(dataObj.error)
+              }
+            } catch (e) {
+              // ignore partial json
             }
-          })
+          }
         }
-
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Chat error:", error)
       setCurrentExpression("scared")
       setTriggerMotion("Sad")
+      const errorMsg = error instanceof Error ? error.message : (error?.message || "Đã xảy ra lỗi khi gửi tin nhắn. Vui lòng thử lại.")
+      toast.error(errorMsg)
+      setMessages((prev) => prev.filter((m) => m.id !== assistantMsgId))
     } finally {
       setIsLoading(false)
       setTimeout(() => setTriggerMotion(null), 500)
@@ -493,12 +650,47 @@ export function ChatWidgetLive2D({ avatar }: ChatWidgetProps) {
                                 </div>
                               )}
 
-                              {msg.role === "assistant" && msg.actions && msg.actions.length > 0 && (
-                                <div className="mt-2.5 pt-2 border-t border-border/50 flex items-start gap-1.5">
-                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                                  <p className="text-[0.7rem] text-muted-foreground">
-                                    Đã thực hiện: {msg.actions.map((a) => a.type).join(", ")}
-                                  </p>
+                              {msg.role === "assistant" && msg.actions && msg.actions.filter((a) => {
+                                if (a.type === "query_stats") return false
+                                if (a.type === "query_schedule" && (!Array.isArray(a.result?.tasks) || a.result.tasks.length === 0) && (!Array.isArray(a.result?.events) || a.result.events.length === 0)) return false
+                                return true
+                              }).length > 0 && (
+                                <div className="mt-2.5 pt-2 border-t border-border/50 space-y-2">
+                                  {msg.actions.filter((a) => {
+                                    if (a.type === "query_stats") return false
+                                    if (a.type === "query_schedule" && (!Array.isArray(a.result?.tasks) || a.result.tasks.length === 0) && (!Array.isArray(a.result?.events) || a.result.events.length === 0)) return false
+                                    return true
+                                  }).map((action, idx) => (
+                                    <div key={idx} className="space-y-1.5">
+                                      <div className="flex items-center justify-between gap-2 bg-background/50 rounded-lg px-2 py-1 border border-border/40">
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                          <CheckCircle2 className={cn("w-3.5 h-3.5 shrink-0", action.undoneAt ? "text-muted-foreground" : "text-emerald-500")} />
+                                          <span className={cn("text-[0.72rem] truncate font-medium", action.undoneAt && "line-through text-muted-foreground")}>
+                                            {formatActionLabel(action)}
+                                          </span>
+                                        </div>
+                                        {action.canUndo && !action.undoneAt && action.logId && (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleUndoAction(action.logId!, msg.id, idx)}
+                                            className="text-[0.68rem] px-2 py-0.5 rounded bg-secondary hover:bg-secondary/80 text-secondary-foreground transition-colors shrink-0 font-medium"
+                                          >
+                                            Hoàn tác
+                                          </button>
+                                        )}
+                                        {action.undoneAt && (
+                                          <span className="text-[0.65rem] text-muted-foreground italic shrink-0">Đã hoàn tác</span>
+                                        )}
+                                      </div>
+
+                                      {(action.type === "query_task" || action.type === "query_schedule") && Array.isArray(action.result?.tasks) ? (
+                                        <TaskCardList tasks={action.result!.tasks as unknown as TaskCardData[]} />
+                                      ) : null}
+                                      {(action.type === "query_event" || action.type === "query_schedule") && Array.isArray(action.result?.events) ? (
+                                        <EventCardList events={action.result!.events as unknown as EventCardData[]} />
+                                      ) : null}
+                                    </div>
+                                  ))}
                                 </div>
                               )}
                             </div>
@@ -533,6 +725,26 @@ export function ChatWidgetLive2D({ avatar }: ChatWidgetProps) {
 
           {/* Input */}
           <div className="px-3 py-3 border-t border-border/60 bg-background/80 backdrop-blur">
+            {isListening && (
+              <div className="flex items-center justify-between gap-3 px-3 py-2 mb-2.5 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive animate-pulse">
+                <div className="flex items-center gap-2">
+                  <Mic className="w-4 h-4 text-destructive animate-bounce" />
+                  <span className="text-[0.78rem] font-medium">Đang ghi âm & lắng nghe...</span>
+                </div>
+                <div className="flex items-center gap-1 h-4">
+                  {[...Array(6)].map((_, i) => {
+                    const barHeight = Math.max(4, Math.min(16, Math.round((volume / 100) * 16 * (0.5 + ((i % 3) * 0.3)))))
+                    return (
+                      <span
+                        key={i}
+                        className="w-1 bg-destructive rounded-full transition-all duration-75"
+                        style={{ height: `${barHeight}px` }}
+                      />
+                    )
+                  })}
+                </div>
+              </div>
+            )}
             <form
               onSubmit={(e) => {
                 e.preventDefault()
